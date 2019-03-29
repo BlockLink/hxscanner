@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"golang.org/x/net/websocket"
 	"log"
-	"github.com/zoowii/hxpaypush/wsjsonrpc/jsonrpc"
+	"github.com/zoowii/hxscanner/wsjsonrpc/jsonrpc"
 	"time"
 	"bytes"
 	netrpc "net/rpc"
