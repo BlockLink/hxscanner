@@ -1,0 +1,66 @@
+package main
+
+import (
+	"log"
+	"github.com/zoowii/hxscanner/src/config"
+	"os"
+	"os/signal"
+	"github.com/zoowii/hxscanner/src/nodeservice"
+	"github.com/zoowii/hxscanner/src/scanner"
+	"github.com/zoowii/hxscanner/src/db"
+	"flag"
+	"fmt"
+)
+
+func main() {
+	log.Println("starting hxscanner")
+	stop := make(chan os.Signal, 2)
+	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, os.Kill)
+
+	quit := make(chan int, 2)
+
+	nodeApiUrl := flag.String("node_endpoint", "ws://127.0.0.1:8090", "hx_node websocket rpc endpoint(=ws://127.0.0.1:8090)")
+	dbHost := flag.String("db_host", "127.0.0.1", "postgresql database host(=127.0.0.1)")
+	dbPort := flag.Int("db_port", 5432, "postgresql database port(=5432)")
+	dbSslMode := flag.String("db_ssl", "disable", "postgresql connection ssl mode(=disable)")
+	dbUser := flag.String("db_user", "postgres", "postgresql database username(=postgres)")
+	dbPassword := flag.String("db_pass", "", "postgresql database password")
+	dbName := flag.String("db_name", "hxscanner", "postgresql database for this application(=hxscanner)")
+	scanFromBlockNumberFlag := flag.Int("scan_from", -1, "scan from block number(default last scanned)")
+	flag.Parse()
+
+	config.SystemConfig = new(config.Config)
+	config.SystemConfig.NodeApiUrl = *nodeApiUrl
+	config.SystemConfig.DbConnectionString = fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s host=%s port=%d", *dbUser, *dbPassword, *dbName, *dbSslMode, *dbHost, *dbPort)
+
+	nodeservice.ConnectHxNode(config.SystemConfig.NodeApiUrl, quit)
+	defer nodeservice.CloseHxNodeConn()
+	err := db.OpenDb(config.SystemConfig.DbConnectionString)
+	if err != nil {
+		log.Fatal("open db connection error " + err.Error())
+		return
+	}
+	defer db.CloseDb()
+
+	go func() {
+		lastScannedBlockNum, err := db.GetLastScannedBlockNumber()
+		if err != nil {
+			log.Fatal("read last scanned block number error " + err.Error())
+			return
+		}
+		if *scanFromBlockNumberFlag >= 0 {
+			lastScannedBlockNum = uint32(*scanFromBlockNumberFlag)
+		}
+		scanner.ScanBlocksFrom(int(lastScannedBlockNum) + 1, quit)
+	}()
+
+	select {
+	case <-stop:
+		{
+			log.Println("hxscanner stopping")
+			quit <- 1
+			quit <- 1
+		}
+	}
+}

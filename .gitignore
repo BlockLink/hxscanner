@@ -1,0 +1,13 @@
+/.idea
+/*.iml
+/build
+/dist
+/tmp
+/log
+/*.log
+/out
+/build
+/target
+*~
+/hxscanner
+/hxscanner.exe
