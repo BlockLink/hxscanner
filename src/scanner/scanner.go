@@ -20,6 +20,9 @@ func cachedGetTableSchema(tableName string) (result *db.PgTableSchema, err error
 		return result, nil
 	}
 	result, err = db.GetTableSchema(tableName)
+	if err == nil && result != nil {
+		tableSchemaCache[tableName] = result
+	}
 	return
 }
 
