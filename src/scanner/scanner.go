@@ -147,6 +147,14 @@ func ScanBlocksFrom(startBlockNum int, quit <-chan int) {
 						log.Fatal("create operation table " + operationTableName + " error " + err.Error())
 						break
 					}
+					// create op index
+					indexName := fmt.Sprintf("%s_idx", operationTableName)
+					createIndexSql := fmt.Sprintf("CREATE INDEX %s ON %s(trxid, index_in_tx)", indexName, operationTableName)
+					err = db.ExecSql(createIndexSql)
+					if err != nil {
+						log.Fatal("create operation table index error " + err.Error())
+						break
+					}
 				}
 				opExistInDb, err := db.CheckOperationExist(operationTableName, txInfo.Trxid, opIndex)
 				if err != nil {

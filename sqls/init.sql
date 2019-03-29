@@ -13,6 +13,8 @@ CREATE TABLE "blocks" (
     CONSTRAINT "pk_blocks" PRIMARY KEY (id)
 );
 
+CREATE INDEX blocks_idx ON blocks(number);
+
 CREATE TABLE "citizen_infos" (
     id serial NOT NULL,
     citizen_id text NULL,
@@ -45,6 +47,8 @@ CREATE TABLE "scan_configs" (
     CONSTRAINT "pk_scan_configs" PRIMARY KEY (id)
 );
 
+CREATE INDEX scan_configs_key_idx ON scan_configs (config_key);
+
 CREATE TABLE "transactions" (
     id text NOT NULL,
     ref_block_num bigint NOT NULL,
@@ -56,6 +60,8 @@ CREATE TABLE "transactions" (
     txid text NULL,
     CONSTRAINT "pk_transactions" PRIMARY KEY (id)
 );
+
+CREATE INDEX transactions_idx ON transactions(txid);
 
 CREATE TABLE "update_account_options_operations" (
     id serial NOT NULL,
@@ -88,6 +94,8 @@ CREATE TABLE "contract_operation_receipt" (
 	transfer_fees TEXT NULL,
   CONSTRAINT "pk_contract_operation_receipt" PRIMARY KEY (id)
 );
+
+CREATE INDEX contract_operation_receipt_idx ON contract_operation_receipt (trxid, op_num);
 
 CREATE TABLE "contract_operation_receipt_event" (
   id serial NOT NULL,

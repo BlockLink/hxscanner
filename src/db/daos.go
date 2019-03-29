@@ -381,6 +381,19 @@ func CheckTableExist(tableName string) (bool, error) {
 	return false, nil
 }
 
+func ExecSql(sql string) error {
+	stmt, err := dbConn.Prepare(sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func CreateTable(tableName string, columnDefinitions []string, extraSql string) error {
 	columnDefsSql := strings.Join(columnDefinitions, ", ")
 	var extendSql string
@@ -390,17 +403,7 @@ func CreateTable(tableName string, columnDefinitions []string, extraSql string) 
 		extendSql = ""
 	}
 	sql := fmt.Sprintf("CREATE TABLE \"%s\" (%s %s)", tableName, columnDefsSql, extendSql)
-	stmt, err := dbConn.Prepare(sql)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-	res, err := stmt.Exec()
-	if err != nil {
-		return err
-	}
-	_ = res
-	return nil
+	return ExecSql(sql)
 }
 
 func InsertDynamicOperation(tableName string, tableSchema *PgTableSchema, opJson map[string]interface{}) error {
