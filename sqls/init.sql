@@ -111,3 +111,5 @@ CREATE TABLE "contract_operation_receipt_event" (
   event_name text NOT NULL,
   CONSTRAINT "pk_contract_operation_receipt_event" PRIMARY KEY (id)
 );
+
+create view citizen_fee_change as (select r.addr, r.block_num, r.trxid, r.account, r.new_options->'miner_pledge_pay_back' as miner_pledge_pay_back, r.new_options from (select r.addr, r.block_num, r.trxid, r.new_options::jsonb, r.account from tbl_account_update_operation r order by r.block_num desc  ) r)
