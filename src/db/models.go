@@ -48,6 +48,16 @@ type TransactionEntity struct {
 	Txid string
 }
 
+type BaseOperationEntity struct {
+	Id string
+	Trxid string
+	BlockNum int
+	TxIndexInBlock int
+	OperationType int
+	OperationTypeName string
+	OperationJSON string
+}
+
 type ScanConfigEntity struct {
 	Id int64
 	ConfigKey string

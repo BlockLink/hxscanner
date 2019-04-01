@@ -42,7 +42,6 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 
 		}
 		// TODO: fetch 100 blocks concurrency
-		// TODO: check whether is latest block
 		// TODO: use channel to produce fetched-blocks goroutine and store goroutine
 		block, err := nodeservice.GetBlock(scannedBlockNum)
 		if err != nil {
@@ -187,6 +186,32 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 					err = db.InsertDynamicOperation(operationTableName, opTableSchema, opJson)
 					if err != nil {
 						log.Fatal("InsertDynamicOperation to table " + operationTableName + " error " + err.Error())
+						break
+					}
+				}
+				// TODO: insert into base operations table
+				baseOperation := new(db.BaseOperationEntity)
+				baseOperation.OperationType = opTypeInt
+				baseOperation.OperationTypeName = opTypeName
+				baseOperation.TxIndexInBlock = txIndex
+				baseOperation.BlockNum = block.BlockNumber
+				baseOperation.Trxid = txInfo.Trxid
+				opJSONBytes, err := json.Marshal(opJson)
+				if err != nil {
+					log.Fatal("json marshal operation error "+ err.Error())
+					break
+				}
+				baseOperation.OperationJSON = string(opJSONBytes)
+				baseOperation.Id = db.GetBaseOperationId(baseOperation.BlockNum, baseOperation.Trxid, opIndex)
+				oldBaseOpInDb, err := db.FindBaseOperation(baseOperation.Id)
+				if err != nil {
+					log.Println("find base operation at " +baseOperation.Id+ " with error "+ err.Error())
+					break
+				}
+				if oldBaseOpInDb == nil {
+					err = db.SaveBaseOperation(baseOperation)
+					if err != nil {
+						log.Fatal("SaveBaseOperation error " + err.Error())
 						break
 					}
 				}

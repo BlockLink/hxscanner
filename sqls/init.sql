@@ -36,9 +36,12 @@ CREATE TABLE "operations" (
     tx_block_number bigint NOT NULL,
     tx_index_in_block bigint NOT NULL,
     operation_type bigint NOT NULL,
+    operation_type_name varchar(255) NOT NULL,
     operation_json text NULL,
     CONSTRAINT "pk_operations" PRIMARY KEY (id)
 );
+
+CREATE INDEX operations_txid_idx ON operations (txid);
 
 CREATE TABLE "scan_configs" (
     id serial NOT NULL,

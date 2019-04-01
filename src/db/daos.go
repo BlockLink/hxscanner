@@ -160,6 +160,33 @@ func FindBlock(blockNumber int) (result *BlockEntity, err error) {
 	return
 }
 
+func GetBaseOperationId(blockNum int, trxId string, opNum int) string {
+	return fmt.Sprintf("%d@%s@%d", blockNum, trxId, opNum)
+}
+
+func FindBaseOperation(id string) (result *BaseOperationEntity, err error) {
+	rows, err := dbConn.Query("SELECT id, txid, tx_block_number, tx_index_in_block, operation_type, operation_type_name, operation_json FROM public.operations where id=$1", id)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	if rows.Next() {
+		result = new(BaseOperationEntity)
+		err = rows.Scan(&result.Id, &result.Trxid, &result.BlockNum, &result.TxIndexInBlock, &result.OperationType, &result.OperationTypeName, &result.OperationJSON)
+		if err != nil {
+			return
+		}
+		return
+	} else {
+		return
+	}
+	err = rows.Err()
+	if err != nil {
+		return
+	}
+	return
+}
+
 func CheckOperationExist(tableName string, trxid string, indexInTx int) (result bool, err error) {
 	rows, err := dbConn.Query("SELECT * FROM public." + tableName + " where trxid=$1 and index_in_tx=$2", trxid, indexInTx)
 	if err != nil {
@@ -232,6 +259,25 @@ func SaveBlock(block *nodeservice.HxBlock) error {
 	}
 	defer stmt.Close()
 	res, err := stmt.Exec(block.BlockNumber, block.BlockNumber, block.Previous, block.Timestamp, block.Trxfee, block.Miner, block.TransactionMerkleRoot, block.NextSecretHash, "", 0, len(block.Transactions))
+	if err != nil {
+		return err
+	}
+	_ = res
+	//lastId, err := res.LastInsertId()
+	//if err != nil {
+	//	return err
+	//}
+	//log.Println("last block record id " + strconv.Itoa(int(lastId)))
+	return nil
+}
+
+func SaveBaseOperation(operation *BaseOperationEntity) error {
+	stmt, err := dbConn.Prepare("INSERT INTO public.operations (id, txid, tx_block_number, tx_index_in_block, operation_type, operation_type_name, operation_json) VALUES (($1),($2),($3),($4),($5),($6),($7) )")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(operation.Id, operation.Trxid, operation.BlockNum, operation.TxIndexInBlock, operation.OperationType, operation.OperationTypeName, operation.OperationJSON)
 	if err != nil {
 		return err
 	}
