@@ -10,6 +10,7 @@ import (
 	"github.com/zoowii/hxscanner/src/db"
 	"flag"
 	"fmt"
+	"context"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 	signal.Notify(stop, os.Interrupt)
 	signal.Notify(stop, os.Kill)
 
-	quit := make(chan int, 2)
+	ctx, cancel := context.WithCancel(context.Background())
 
 	nodeApiUrl := flag.String("node_endpoint", "ws://127.0.0.1:8090", "hx_node websocket rpc endpoint(=ws://127.0.0.1:8090)")
 	dbHost := flag.String("db_host", "127.0.0.1", "postgresql database host(=127.0.0.1)")
@@ -34,7 +35,7 @@ func main() {
 	config.SystemConfig.NodeApiUrl = *nodeApiUrl
 	config.SystemConfig.DbConnectionString = fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s host=%s port=%d", *dbUser, *dbPassword, *dbName, *dbSslMode, *dbHost, *dbPort)
 
-	nodeservice.ConnectHxNode(config.SystemConfig.NodeApiUrl, quit)
+	nodeservice.ConnectHxNode(ctx, config.SystemConfig.NodeApiUrl)
 	defer nodeservice.CloseHxNodeConn()
 	err := db.OpenDb(config.SystemConfig.DbConnectionString)
 	if err != nil {
@@ -52,15 +53,15 @@ func main() {
 		if *scanFromBlockNumberFlag >= 0 {
 			lastScannedBlockNum = uint32(*scanFromBlockNumberFlag)
 		}
-		scanner.ScanBlocksFrom(int(lastScannedBlockNum) + 1, quit)
+		scanner.ScanBlocksFrom(ctx, int(lastScannedBlockNum) + 1)
+		signal.Stop(stop)
 	}()
 
 	select {
 	case <-stop:
 		{
 			log.Println("hxscanner stopping")
-			quit <- 1
-			quit <- 1
+			cancel()
 		}
 	}
 }

@@ -8,12 +8,13 @@ import (
 	"time"
 	"bytes"
 	netrpc "net/rpc"
+	"context"
 )
 
 var _ws *websocket.Conn = nil
 var _client *netrpc.Client = nil
 
-func ConnectHxNode(apiUrl string, quit chan int) error {
+func ConnectHxNode(ctx context.Context, apiUrl string) error {
 	origin := apiUrl
 	url := apiUrl
 	var err error
@@ -39,7 +40,7 @@ func ConnectHxNode(apiUrl string, quit chan int) error {
 	}()
 	go func() {
 		select {
-		case <- quit:
+		case <- ctx.Done():
 			log.Fatal(CloseHxNodeConn())
 		}
 	}()
@@ -111,14 +112,18 @@ func GetBlock(blockNum int) (block *HxBlock, err error) {
 		log.Println("ws to hx_node disconnected")
 		return
 	}
+	var wrapperReply interface{}
 	var reply = new(HxBlock)
 	c := _client
-	err = c.Call("get_block", blockNum, &reply)
+	err = c.Call("get_block", blockNum, &wrapperReply)
 	if err != nil {
-		log.Println("get_block error", err)
+		if err.Error()=="error <nil>" {
+			return nil, nil
+		}
+		log.Println("get_block error " + err.Error())
 		return
 	}
-	replyJSONBytes, err := json.Marshal(&reply)
+	replyJSONBytes, err := json.Marshal(&wrapperReply)
 	replyJSONBytesDecoder := json.NewDecoder(bytes.NewReader(replyJSONBytes))
 	replyJSONBytesDecoder.UseNumber()
 	err = replyJSONBytesDecoder.Decode(&reply)

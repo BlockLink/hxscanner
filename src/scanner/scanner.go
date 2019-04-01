@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"github.com/zoowii/hxscanner/src/db"
 	"fmt"
+	"context"
 )
 
 var tableSchemaCache = make(map[string]*db.PgTableSchema)
@@ -26,7 +27,7 @@ func cachedGetTableSchema(tableName string) (result *db.PgTableSchema, err error
 	return
 }
 
-func ScanBlocksFrom(startBlockNum int, quit <-chan int) {
+func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 	scannedBlockNum := startBlockNum
 	end := false
 	for ;; {
@@ -34,17 +35,29 @@ func ScanBlocksFrom(startBlockNum int, quit <-chan int) {
 			break
 		}
 		select {
-		case <- quit:
+		case <- ctx.Done():
 			end = true
 			break
 		default:
 
 		}
 		// TODO: fetch 100 blocks concurrency
+		// TODO: check whether is latest block
+		// TODO: use channel to produce fetched-blocks goroutine and store goroutine
 		block, err := nodeservice.GetBlock(scannedBlockNum)
 		if err != nil {
 			log.Println("got block at #" + strconv.Itoa(scannedBlockNum) + " with error "+ err.Error())
 			break
+		}
+		if block == nil {
+			log.Println("scanned block #" + strconv.Itoa(scannedBlockNum-1))
+			err = db.UpdateLastScannedBlockNumber(scannedBlockNum-1)
+			if err != nil {
+				log.Fatal("UpdateLastScannedBlockNumber error " + err.Error())
+				break
+			}
+			time.Sleep(5 * time.Second)
+			continue
 		}
 		// find or replace same records
 		// save block
