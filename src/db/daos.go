@@ -1,14 +1,15 @@
 package db
 
 import (
-	"github.com/zoowii/hxscanner/src/nodeservice"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"fmt"
-	"strings"
-	"github.com/zoowii/hxscanner/src/config"
-	"strconv"
 	"log"
+	"strconv"
+	"strings"
+
+	"github.com/blocklink/hxscanner/src/config"
+	"github.com/blocklink/hxscanner/src/nodeservice"
+	"github.com/pkg/errors"
 )
 
 func GetScanConfigOr(configKey string, elseValue string) (string, error) {
@@ -188,7 +189,7 @@ func FindBaseOperation(id string) (result *BaseOperationEntity, err error) {
 }
 
 func CheckOperationExist(tableName string, trxid string, indexInTx int) (result bool, err error) {
-	rows, err := dbConn.Query("SELECT * FROM public." + tableName + " where trxid=$1 and index_in_tx=$2", trxid, indexInTx)
+	rows, err := dbConn.Query("SELECT * FROM public."+tableName+" where trxid=$1 and index_in_tx=$2", trxid, indexInTx)
 	if err != nil {
 		return
 	}
@@ -212,7 +213,7 @@ func GetTableSchema(tableName string) (result *PgTableSchema, err error) {
 		return
 	}
 	defer rows.Close()
-	result = new (PgTableSchema)
+	result = new(PgTableSchema)
 	result.Columns = make([]*PgTableSchemaColumn, 0)
 	for rows.Next() {
 		col := new(PgTableSchemaColumn)
@@ -374,7 +375,6 @@ func UpdateConfig(configEntity *ScanConfigEntity) error {
 	return nil
 }
 
-
 func SaveTransaction(tx *nodeservice.HxTransaction) error {
 	stmt, err := dbConn.Prepare("INSERT INTO public.transactions (id, ref_block_num, ref_block_prefix, expiration, operations_count, index_in_block, first_operation_type, txid) VALUES (($1),($2),($3),($4),($5),($6),($7),($8) )")
 	if err != nil {
@@ -475,7 +475,7 @@ func InsertDynamicOperation(tableName string, tableSchema *PgTableSchema, opJson
 		}
 		colNameSql := fmt.Sprintf("\"%s\"", opKey)
 		opTableColumnNameSqls = append(opTableColumnNameSqls, colNameSql)
-		prepareValueSqls = append(prepareValueSqls, fmt.Sprintf(" $%d ", len(prepareValueSqls) + 1))
+		prepareValueSqls = append(prepareValueSqls, fmt.Sprintf(" $%d ", len(prepareValueSqls)+1))
 		opValuesForSql = append(opValuesForSql, opValueForSql)
 	}
 	columnsSql := strings.Join(opTableColumnNameSqls, ",")

@@ -1,14 +1,15 @@
 package nodeservice
 
 import (
-	"encoding/json"
-	"golang.org/x/net/websocket"
-	"log"
-	"github.com/zoowii/hxscanner/wsjsonrpc/jsonrpc"
-	"time"
 	"bytes"
-	netrpc "net/rpc"
 	"context"
+	"encoding/json"
+	"log"
+	netrpc "net/rpc"
+	"time"
+
+	"github.com/blocklink/hxscanner/wsjsonrpc/jsonrpc"
+	"golang.org/x/net/websocket"
 )
 
 var _ws *websocket.Conn = nil
@@ -26,7 +27,7 @@ func ConnectHxNode(ctx context.Context, apiUrl string) error {
 	go func() {
 		for {
 			select {
-			case <- time.After(time.Second*30):
+			case <-time.After(time.Second * 30):
 				if _ws != nil {
 					_ws.Write([]byte("ping"))
 				} else {
@@ -40,7 +41,7 @@ func ConnectHxNode(ctx context.Context, apiUrl string) error {
 	}()
 	go func() {
 		select {
-		case <- ctx.Done():
+		case <-ctx.Done():
 			log.Fatal(CloseHxNodeConn())
 		}
 	}()
@@ -65,38 +66,38 @@ type TxidArgs struct {
 }
 
 type HxTransaction struct {
-	BlockNum uint32 `json:"block_num"`
-	Trxid string `json:"trxid"`
-	ContractId string `json:"contract_id"`
-	IndexInBlock int `json:"index_in_block"`
-	Expiration string `json:"expiration"`
-	Extensions []interface{} `json:"extensions"`
-	OperationResults []interface{} `json:"operation_results"`
-	Operations [][]interface{} `json:"operations"` // every item is [operationTypeInt, operationJson]
-	RefBlockNum uint32 `json:"ref_block_num"`
-	RefBlockPrefix uint64 `json:"ref_block_prefix"`
-	Signatures []string `json:"signatures"`
+	BlockNum         uint32          `json:"block_num"`
+	Trxid            string          `json:"trxid"`
+	ContractId       string          `json:"contract_id"`
+	IndexInBlock     int             `json:"index_in_block"`
+	Expiration       string          `json:"expiration"`
+	Extensions       []interface{}   `json:"extensions"`
+	OperationResults []interface{}   `json:"operation_results"`
+	Operations       [][]interface{} `json:"operations"` // every item is [operationTypeInt, operationJson]
+	RefBlockNum      uint32          `json:"ref_block_num"`
+	RefBlockPrefix   uint64          `json:"ref_block_prefix"`
+	Signatures       []string        `json:"signatures"`
 }
 
 type HxFullTransactionExtraInfo struct {
-	BlockNum uint32 `json:"block_num"`
-	Trxid string `json:"trxid"`
+	BlockNum   uint32 `json:"block_num"`
+	Trxid      string `json:"trxid"`
 	ContractId string `json:"contract_id"`
 }
 
 type HxBlock struct {
-	BlockNumber int `json:"block_number"`
-	Extensions []interface{} `json:"extensions"`
-	Miner string `json:"miner"`
-	MinerSignature string `json:"miner_signature"`
-	NextSecretHash string `json:"next_secret_hash"`
-	Previous string `json:"previous"`
-	PreviousSecret string `json:"previous_secret"`
-	Timestamp string `json:"timestamp"`
-	TransactionMerkleRoot string `json:"transaction_merkle_root"`
-	Transactions []*HxTransaction `json:"transactions"`
-	TransactionIds []string `json:"transaction_ids"`
-	Trxfee int `json:"trxfee"`
+	BlockNumber           int              `json:"block_number"`
+	Extensions            []interface{}    `json:"extensions"`
+	Miner                 string           `json:"miner"`
+	MinerSignature        string           `json:"miner_signature"`
+	NextSecretHash        string           `json:"next_secret_hash"`
+	Previous              string           `json:"previous"`
+	PreviousSecret        string           `json:"previous_secret"`
+	Timestamp             string           `json:"timestamp"`
+	TransactionMerkleRoot string           `json:"transaction_merkle_root"`
+	Transactions          []*HxTransaction `json:"transactions"`
+	TransactionIds        []string         `json:"transaction_ids"`
+	Trxfee                int              `json:"trxfee"`
 }
 
 func GetKeysOfJson(val map[string]interface{}) []string {
@@ -117,7 +118,7 @@ func GetBlock(blockNum int) (block *HxBlock, err error) {
 	c := _client
 	err = c.Call("get_block", blockNum, &wrapperReply)
 	if err != nil {
-		if err.Error()=="error <nil>" {
+		if err.Error() == "error <nil>" {
 			return nil, nil
 		}
 		log.Println("get_block error " + err.Error())
@@ -162,7 +163,7 @@ func IsContractOpType(operationType int) bool {
 	return operationType >= 76 && operationType <= 81
 }
 
-func CheckTransactionHasContractOp(txInfo *HxTransaction)  bool {
+func CheckTransactionHasContractOp(txInfo *HxTransaction) bool {
 	for _, operationItemArray := range txInfo.Operations {
 		if len(operationItemArray) >= 2 {
 			if operationTypeNum, ok := operationItemArray[0].(json.Number); ok {
@@ -179,31 +180,31 @@ func CheckTransactionHasContractOp(txInfo *HxTransaction)  bool {
 }
 
 type HxContractOpReceiptEvent struct {
-	BlockNum uint32 `json:"block_num"`
-	CallerAddr string `json:"caller_addr"`
+	BlockNum        uint32 `json:"block_num"`
+	CallerAddr      string `json:"caller_addr"`
 	ContractAddress string `json:"contract_address"`
-	EventArg string `json:"event_arg"`
-	EventName string `json:"event_name"`
-	OpNum int `json:"op_num"`
-	Trxid string `json:"trx_id"`
+	EventArg        string `json:"event_arg"`
+	EventName       string `json:"event_name"`
+	OpNum           int    `json:"op_num"`
+	Trxid           string `json:"trx_id"`
 }
 
 type HxContractOpReceipt struct {
-	Id string `json:"id"`
-	Trxid string `json:"trx_id"`
-	BlockNum uint32 `json:"block_num"`
-	OpNum int `json:"op_num"`
-	ApiResult string `json:"api_result"`
-	Events []*HxContractOpReceiptEvent `json:"events"`
-	ExecSucceed bool `json:"exec_succeed"`
-	ActualFee uint64 `json:"acctual_fee"`
-	Invoker string `json:"invoker"`
-	ContractRegistered string `json:"contract_registed"`
-	ContractWithdrawInfo []interface{} `json:"contract_withdraw"`
-	ContractBalanceChanges []interface{} `json:"contract_balances"`
-	DepositToAddressChanges []interface{} `json:"deposit_to_address"`
-	DepositToContractChanges []interface{} `json:"deposit_contract"`
-	TransferFees []interface{} `json:"transfer_fees"`
+	Id                       string                      `json:"id"`
+	Trxid                    string                      `json:"trx_id"`
+	BlockNum                 uint32                      `json:"block_num"`
+	OpNum                    int                         `json:"op_num"`
+	ApiResult                string                      `json:"api_result"`
+	Events                   []*HxContractOpReceiptEvent `json:"events"`
+	ExecSucceed              bool                        `json:"exec_succeed"`
+	ActualFee                uint64                      `json:"acctual_fee"`
+	Invoker                  string                      `json:"invoker"`
+	ContractRegistered       string                      `json:"contract_registed"`
+	ContractWithdrawInfo     []interface{}               `json:"contract_withdraw"`
+	ContractBalanceChanges   []interface{}               `json:"contract_balances"`
+	DepositToAddressChanges  []interface{}               `json:"deposit_to_address"`
+	DepositToContractChanges []interface{}               `json:"deposit_contract"`
+	TransferFees             []interface{}               `json:"transfer_fees"`
 }
 
 func NewHxContractOpReceipt() *HxContractOpReceipt {
@@ -218,7 +219,7 @@ func NewHxContractOpReceipt() *HxContractOpReceipt {
 }
 
 type HxContractTxReceipt struct {
-	OpReceipts []*HxContractOpReceipt
+	OpReceipts                 []*HxContractOpReceipt
 	HasFailedContractOperation bool
 }
 
@@ -239,7 +240,7 @@ func GetTxReceipts(txInfo *HxTransaction) (txReceipts *HxContractTxReceipt, err 
 	_ = replyJSONBytes
 	// log.Println(string(replyJSONBytes), err)
 	var hasFailedContractOperation = false
-	for i:=0;i<len(txReceipts.OpReceipts);i++ {
+	for i := 0; i < len(txReceipts.OpReceipts); i++ {
 		operationResult := txReceipts.OpReceipts[i]
 		if operationResult != nil {
 			if !operationResult.ExecSucceed {
@@ -281,7 +282,7 @@ func FindHxTransactionByTxid(txid string) (state string) {
 	var hasContractOp = false
 	if operationsJSON, ok := reply["operations"]; ok {
 		if operations, ok := operationsJSON.([]interface{}); ok {
-			for i:=0;i<len(operations);i++ {
+			for i := 0; i < len(operations); i++ {
 				operationJSON := operations[i]
 				if operationItemArray, ok := operationJSON.([]interface{}); ok {
 					if len(operationItemArray) >= 2 {
@@ -300,7 +301,7 @@ func FindHxTransactionByTxid(txid string) (state string) {
 		}
 	}
 	if hasContractOp {
-		var contractInvokeObjectReply = []map[string]interface{} {}
+		var contractInvokeObjectReply = []map[string]interface{}{}
 		err := c.Call("get_contract_invoke_object", txid, &contractInvokeObjectReply)
 		if err != nil {
 			log.Println("get_contract_invoke_object error: " + err.Error())
@@ -310,7 +311,7 @@ func FindHxTransactionByTxid(txid string) (state string) {
 		_ = replyJSONBytes
 		// log.Println(string(replyJSONBytes), err)
 		var hasFailedContractOperation = false
-		for i:=0;i<len(contractInvokeObjectReply);i++ {
+		for i := 0; i < len(contractInvokeObjectReply); i++ {
 			operationResult := contractInvokeObjectReply[i]
 			if operationResult != nil {
 				if execSucceedObj, ok := operationResult["exec_succeed"]; ok {

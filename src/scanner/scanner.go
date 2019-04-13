@@ -1,13 +1,13 @@
 package scanner
 
 import (
-	"github.com/zoowii/hxscanner/src/nodeservice"
+	"github.com/blocklink/hxscanner/src/nodeservice"
 	"log"
 	"strconv"
 	"time"
 	"reflect"
 	"encoding/json"
-	"github.com/zoowii/hxscanner/src/db"
+	"github.com/blocklink/hxscanner/src/db"
 	"fmt"
 	"context"
 )

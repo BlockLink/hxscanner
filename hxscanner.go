@@ -1,16 +1,17 @@
 package main
 
 import (
-	"log"
-	"github.com/zoowii/hxscanner/src/config"
-	"os"
-	"os/signal"
-	"github.com/zoowii/hxscanner/src/nodeservice"
-	"github.com/zoowii/hxscanner/src/scanner"
-	"github.com/zoowii/hxscanner/src/db"
+	"context"
 	"flag"
 	"fmt"
-	"context"
+	"log"
+	"os"
+	"os/signal"
+
+	"github.com/blocklink/hxscanner/src/config"
+	"github.com/blocklink/hxscanner/src/db"
+	"github.com/blocklink/hxscanner/src/nodeservice"
+	"github.com/blocklink/hxscanner/src/scanner"
 )
 
 func main() {
@@ -53,7 +54,7 @@ func main() {
 		if *scanFromBlockNumberFlag >= 0 {
 			lastScannedBlockNum = uint32(*scanFromBlockNumberFlag)
 		}
-		scanner.ScanBlocksFrom(ctx, int(lastScannedBlockNum) + 1)
+		scanner.ScanBlocksFrom(ctx, int(lastScannedBlockNum)+1)
 		signal.Stop(stop)
 	}()
 
