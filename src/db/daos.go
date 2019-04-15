@@ -166,14 +166,14 @@ func GetBaseOperationId(blockNum int, trxId string, opNum int) string {
 }
 
 func FindBaseOperation(id string) (result *BaseOperationEntity, err error) {
-	rows, err := dbConn.Query("SELECT id, txid, tx_block_number, tx_index_in_block, operation_type, operation_type_name, operation_json FROM public.operations where id=$1", id)
+	rows, err := dbConn.Query("SELECT id, txid, tx_block_number, tx_index_in_block, operation_type, operation_type_name, operation_json, addr FROM public.operations where id=$1", id)
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 	if rows.Next() {
 		result = new(BaseOperationEntity)
-		err = rows.Scan(&result.Id, &result.Trxid, &result.BlockNum, &result.TxIndexInBlock, &result.OperationType, &result.OperationTypeName, &result.OperationJSON)
+		err = rows.Scan(&result.Id, &result.Trxid, &result.BlockNum, &result.TxIndexInBlock, &result.OperationType, &result.OperationTypeName, &result.OperationJSON, &result.Addr)
 		if err != nil {
 			return
 		}
@@ -273,12 +273,12 @@ func SaveBlock(block *nodeservice.HxBlock) error {
 }
 
 func SaveBaseOperation(operation *BaseOperationEntity) error {
-	stmt, err := dbConn.Prepare("INSERT INTO public.operations (id, txid, tx_block_number, tx_index_in_block, operation_type, operation_type_name, operation_json) VALUES (($1),($2),($3),($4),($5),($6),($7) )")
+	stmt, err := dbConn.Prepare("INSERT INTO public.operations (id, txid, tx_block_number, tx_index_in_block, operation_type, operation_type_name, operation_json, addr) VALUES (($1),($2),($3),($4),($5),($6),($7), ($8) )")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(operation.Id, operation.Trxid, operation.BlockNum, operation.TxIndexInBlock, operation.OperationType, operation.OperationTypeName, operation.OperationJSON)
+	res, err := stmt.Exec(operation.Id, operation.Trxid, operation.BlockNum, operation.TxIndexInBlock, operation.OperationType, operation.OperationTypeName, operation.OperationJSON, operation.Addr)
 	if err != nil {
 		return err
 	}

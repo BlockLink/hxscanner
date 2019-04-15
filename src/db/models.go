@@ -56,6 +56,7 @@ type BaseOperationEntity struct {
 	OperationType int
 	OperationTypeName string
 	OperationJSON string
+	Addr string
 }
 
 type ScanConfigEntity struct {

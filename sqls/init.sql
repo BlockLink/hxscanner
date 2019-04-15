@@ -38,6 +38,7 @@ CREATE TABLE "operations" (
     operation_type bigint NOT NULL,
     operation_type_name varchar(255) NOT NULL,
     operation_json text NULL,
+    addr text NULL,
     CONSTRAINT "pk_operations" PRIMARY KEY (id)
 );
 
