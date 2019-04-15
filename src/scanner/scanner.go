@@ -203,13 +203,18 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 				}
 				baseOperation.OperationJSON = string(opJSONBytes)
 				var addr string
+				var addrObj interface{}
 				var addrFound bool
-				addr, addrFound = opJson["addr"]
+				addrObj, addrFound = opJson["addr"]
 				if !addrFound {
-					addr, addrFound = opJson["from_addr"]
+					addrObj, addrFound = opJson["from_addr"]
 					if !addrFound {
-						addr = ""
+						addrObj = ""
 					}
+				}
+				addr, addrFound = addrObj.(string)
+				if !addrFound {
+					addr = ""
 				}
 				baseOperation.Addr = addr
 				baseOperation.Id = db.GetBaseOperationId(baseOperation.BlockNum, baseOperation.Trxid, opIndex)
