@@ -204,13 +204,15 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 				baseOperation.OperationJSON = string(opJSONBytes)
 				var addr string
 				var addrObj interface{}
-				var addrFound bool
-				addrObj, addrFound = opJson["addr"]
-				if !addrFound {
-					addrObj, addrFound = opJson["from_addr"]
+				var addrFound = false
+				maybeAddrProps := []string {"addr", "from_addr", "caller_addr", "owner_addr", "miner_address", "payer", "fee_paying_account", "lock_balance_addr", "pay_back_owner", "bonus_owner", "fee_pay_address", "publisher_addr", "addr_from_claim", "issuer_addr"}
+				for _, prop := range maybeAddrProps {
 					if !addrFound {
-						addrObj = ""
+						addrObj, addrFound = opJson[prop]
 					}
+				}
+				if !addrFound {
+					addrObj = ""
 				}
 				addr, addrFound = addrObj.(string)
 				if !addrFound {
