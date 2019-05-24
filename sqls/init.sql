@@ -112,3 +112,31 @@ CREATE TABLE "contract_operation_receipt_event" (
   event_name text NOT NULL,
   CONSTRAINT "pk_contract_operation_receipt_event" PRIMARY KEY (id)
 );
+
+CREATE TABLE "token_contract" (
+  id serial NOT NULL,
+  block_num integer NOT NULL,
+  block_time varchar(100) NOT NULL,
+  txid varchar(100) NOT NULL,
+  contract_id varchar(100) NOT NULL,
+  contract_type varchar(100) NOT NULL,
+  owner_pubkey varchar(200) NOT NULL,
+  owner_addr varchar(100) NOT NULL,
+  register_time varchar(100) NOT NULL,
+  inherit_from varchar(100) NOT NULL,
+  gas_price integer NOT NULL,
+  gas_limit integer NOT NULL,
+  state varchar(100) NULL,
+  total_supply varchar(100) NULL,
+  precision integer NULL,
+  token_symbol varchar(255) NULL,
+  token_name varchar(255) NULL,
+  logo varchar(255) NULL,
+  url varchar(255) NULL,
+  description text NULL,
+  CONSTRAINT "pk_token_contract" PRIMARY KEY (id)
+);
+
+CREATE INDEX token_contract_contract_id_idx ON token_contract (contract_id);
+CREATE INDEX token_contract_contract_owner_addr_idx ON token_contract (owner_addr);
+CREATE INDEX token_contract_block_num_idx ON token_contract (block_num);

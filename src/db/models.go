@@ -4,6 +4,7 @@ import (
 	_ "github.com/bmizerany/pq"
 	"database/sql"
 	"log"
+	"math/big"
 )
 
 var dbConn *sql.DB = nil
@@ -81,4 +82,27 @@ func (schema *PgTableSchema) HasColumn(name string) bool {
 		}
 	}
 	return false
+}
+
+type TokenContractEntity struct {
+	Id int64
+	BlockNum uint32
+	BlockTime string
+	Txid string
+	ContractId string
+	ContractType string
+	OwnerPubkey string
+	OwnerAddr string
+	RegisterTime string
+	InheritFrom string
+	GasPrice uint64
+	GasLimit uint64
+	State *string
+	TotalSupply *big.Int
+	Precision *uint32
+	TokenSymbol *string
+	TokenName *string
+	Logo *string
+	Url *string
+	Description *string
 }

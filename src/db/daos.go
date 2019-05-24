@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/blocklink/hxscanner/src/config"
-	"github.com/blocklink/hxscanner/src/nodeservice"
+	"github.com/blocklink/hxscanner/src/types"
 	"github.com/pkg/errors"
 )
 
@@ -76,16 +76,21 @@ func FindScanConfig(configKey string) (result *ScanConfigEntity, err error) {
 	return
 }
 
-func FindContractOpReceipt(trxid string, opNum int) (result *nodeservice.HxContractOpReceipt, err error) {
-	rows, err := dbConn.Query("SELECT id, trxid, block_num, op_num, api_result, events, exec_succeed, actual_fee, invoker, contract_registered, contract_withdraw_info, contract_balance_changes, deposit_to_address_changes, deposit_to_contract_changes, transfer_fees FROM public.contract_operation_receipt where trxid=$1 and op_num=$2", trxid, opNum)
+func FindContractOpReceipt(trxid string, opNum int) (result *types.HxContractOpReceipt, err error) {
+	rows, err := dbConn.Query("SELECT id, trxid, block_num, op_num, api_result, events, exec_succeed," +
+		" actual_fee, invoker, contract_registered, contract_withdraw_info, contract_balance_changes," +
+		" deposit_to_address_changes, deposit_to_contract_changes, transfer_fees" +
+		" FROM public.contract_operation_receipt where trxid=$1 and op_num=$2", trxid, opNum)
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 	if rows.Next() {
-		result = nodeservice.NewHxContractOpReceipt()
+		result = types.NewHxContractOpReceipt()
 		var eventsStr, contractWithdrawInfoStr, contractBalancesChangesStr, depositToAddressChangesStr, depositToContractChangesStr, transferFeesStr string
-		err = rows.Scan(&result.Id, &result.Trxid, &result.BlockNum, &result.OpNum, &result.ApiResult, &eventsStr, &result.ExecSucceed, &result.ActualFee, &result.Invoker, &result.ContractRegistered, &contractWithdrawInfoStr, &contractBalancesChangesStr, &depositToAddressChangesStr, &depositToContractChangesStr, &transferFeesStr)
+		err = rows.Scan(&result.Id, &result.Trxid, &result.BlockNum, &result.OpNum, &result.ApiResult, &eventsStr,
+			&result.ExecSucceed, &result.ActualFee, &result.Invoker, &result.ContractRegistered, &contractWithdrawInfoStr,
+			&contractBalancesChangesStr, &depositToAddressChangesStr, &depositToContractChangesStr, &transferFeesStr)
 		if err != nil {
 			return
 		}
@@ -139,14 +144,16 @@ func FindContractOpReceipt(trxid string, opNum int) (result *nodeservice.HxContr
 }
 
 func FindBlock(blockNumber int) (result *BlockEntity, err error) {
-	rows, err := dbConn.Query("SELECT id, number, previous, timestamp, trxfee, miner, transaction_merkle_root, next_secret_hash, block_id, reward, txs_count FROM public.blocks where number=$1", blockNumber)
+	rows, err := dbConn.Query("SELECT id, number, previous, timestamp, trxfee, miner, transaction_merkle_root," +
+		" next_secret_hash, block_id, reward, txs_count FROM public.blocks where number=$1", blockNumber)
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 	if rows.Next() {
 		result = new(BlockEntity)
-		err = rows.Scan(&result.Id, &result.Number, &result.Previous, &result.Timestamp, &result.Trxfee, &result.Miner, &result.TransactionMerkleRoot, &result.NextSecretHash, &result.BlockId, &result.Reward, &result.TxsCount)
+		err = rows.Scan(&result.Id, &result.Number, &result.Previous, &result.Timestamp, &result.Trxfee, &result.Miner,
+			&result.TransactionMerkleRoot, &result.NextSecretHash, &result.BlockId, &result.Reward, &result.TxsCount)
 		if err != nil {
 			return
 		}
@@ -166,14 +173,16 @@ func GetBaseOperationId(blockNum int, trxId string, opNum int) string {
 }
 
 func FindBaseOperation(id string) (result *BaseOperationEntity, err error) {
-	rows, err := dbConn.Query("SELECT id, txid, tx_block_number, tx_index_in_block, operation_type, operation_type_name, operation_json, addr FROM public.operations where id=$1", id)
+	rows, err := dbConn.Query("SELECT id, txid, tx_block_number, tx_index_in_block, operation_type," +
+		" operation_type_name, operation_json, addr FROM public.operations where id=$1", id)
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 	if rows.Next() {
 		result = new(BaseOperationEntity)
-		err = rows.Scan(&result.Id, &result.Trxid, &result.BlockNum, &result.TxIndexInBlock, &result.OperationType, &result.OperationTypeName, &result.OperationJSON, &result.Addr)
+		err = rows.Scan(&result.Id, &result.Trxid, &result.BlockNum, &result.TxIndexInBlock, &result.OperationType,
+			&result.OperationTypeName, &result.OperationJSON, &result.Addr)
 		if err != nil {
 			return
 		}
@@ -231,14 +240,16 @@ func GetTableSchema(tableName string) (result *PgTableSchema, err error) {
 }
 
 func FindTransaction(txid string) (result *TransactionEntity, err error) {
-	rows, err := dbConn.Query("SELECT id, ref_block_num, ref_block_prefix, expiration, operations_count, index_in_block, first_operation_type, txid FROM public.transactions where txid=$1", txid)
+	rows, err := dbConn.Query("SELECT id, ref_block_num, ref_block_prefix, expiration, operations_count," +
+		" index_in_block, first_operation_type, txid FROM public.transactions where txid=$1", txid)
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 	if rows.Next() {
 		result = new(TransactionEntity)
-		err = rows.Scan(&result.Id, &result.RefBlockNum, &result.RefBlockPrefix, &result.Expiration, &result.OperationsCount, &result.IndexInBlock, &result.FirstOperationType, &result.Txid)
+		err = rows.Scan(&result.Id, &result.RefBlockNum, &result.RefBlockPrefix, &result.Expiration,
+			&result.OperationsCount, &result.IndexInBlock, &result.FirstOperationType, &result.Txid)
 		if err != nil {
 			return
 		}
@@ -253,8 +264,10 @@ func FindTransaction(txid string) (result *TransactionEntity, err error) {
 	return
 }
 
-func SaveBlock(block *nodeservice.HxBlock) error {
-	stmt, err := dbConn.Prepare("INSERT INTO public.blocks (id, number, previous, timestamp, trxfee, miner, transaction_merkle_root, next_secret_hash, block_id, reward, txs_count) VALUES (($1),($2),($3),($4),($5),($6),($7),($8),($9),($10),($11) )")
+func SaveBlock(block *types.HxBlock) error {
+	stmt, err := dbConn.Prepare("INSERT INTO public.blocks" +
+		" (id, number, previous, timestamp, trxfee, miner, transaction_merkle_root, next_secret_hash," +
+		" block_id, reward, txs_count) VALUES (($1),($2),($3),($4),($5),($6),($7),($8),($9),($10),($11) )")
 	if err != nil {
 		return err
 	}
@@ -273,7 +286,9 @@ func SaveBlock(block *nodeservice.HxBlock) error {
 }
 
 func SaveBaseOperation(operation *BaseOperationEntity) error {
-	stmt, err := dbConn.Prepare("INSERT INTO public.operations (id, txid, tx_block_number, tx_index_in_block, operation_type, operation_type_name, operation_json, addr) VALUES (($1),($2),($3),($4),($5),($6),($7), ($8) )")
+	stmt, err := dbConn.Prepare("INSERT INTO public.operations (id, txid, tx_block_number," +
+		" tx_index_in_block, operation_type, operation_type_name, operation_json, addr)" +
+		" VALUES (($1),($2),($3),($4),($5),($6),($7), ($8) )")
 	if err != nil {
 		return err
 	}
@@ -310,8 +325,88 @@ func SaveConfig(configKey string, configValue string) error {
 	return nil
 }
 
-func SaveContractOpReceipt(contractOpReceipt *nodeservice.HxContractOpReceipt) error {
-	stmt, err := dbConn.Prepare("INSERT INTO public.contract_operation_receipt (trxid, block_num, op_num, api_result,  exec_succeed, actual_fee, invoker, contract_registered, events, contract_withdraw_info, contract_balance_changes, deposit_to_address_changes, deposit_to_contract_changes, transfer_fees) VALUES (($1),($2),($3),($4),($5),($6),($7),($8),($9),($10),($11),($12),($13),($14) )")
+func tokenContractMainFieldsSql() string {
+	return "block_num, block_time, txid," +
+		" contract_id, contract_type, owner_pubkey, owner_addr, register_time, inherit_from, gas_price," +
+		" gas_limit, state, total_supply, precision, token_symbol, token_name, logo, url, description"
+}
+
+func FindTokenContractByContractId(contractId string) (result *TokenContractEntity, err error) {
+	rows, err := dbConn.Query("SELECT id, "+tokenContractMainFieldsSql()+" FROM public.token_contract where contract_id=$1", contractId)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	if rows.Next() {
+		result = new(TokenContractEntity)
+		err = rows.Scan(&result.Id, &result.BlockNum, &result.BlockTime, &result.Txid,
+			&result.ContractId, &result.ContractType, &result.OwnerPubkey, &result.OwnerAddr, &result.RegisterTime,
+			&result.InheritFrom, &result.GasPrice, &result.GasLimit, &result.State, &result.TotalSupply, &result.Precision,
+				&result.TokenSymbol, &result.TokenName, &result.Logo, &result.Url, &result.Description)
+		if err != nil {
+			return
+		}
+		return
+	} else {
+		return
+	}
+	err = rows.Err()
+	if err != nil {
+		return
+	}
+	return
+}
+
+func UpdateTokenContract(tokenContract *TokenContractEntity) error {
+	stmt, err := dbConn.Prepare("UPDATE public.token_contract SET block_num= $1 , block_time= $2 , txid= $3 ," +
+		" contract_id = $4, contract_type = $5, owner_pubkey = $6, owner_addr = $7, register_time = $8," +
+		" inherit_from = $9, gas_price = $10," +
+		" gas_limit = $11, state = $12, total_supply = $13, precision = $14, token_symbol = $15," +
+		" token_name = $16, logo = $17, url = $19, description = $19 WHERE id=$20")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(tokenContract.BlockNum, tokenContract.BlockTime, tokenContract.Txid, tokenContract.ContractId,
+		tokenContract.ContractType, tokenContract.OwnerPubkey, tokenContract.OwnerAddr, tokenContract.RegisterTime, tokenContract.InheritFrom,
+		tokenContract.GasPrice, tokenContract.GasLimit, tokenContract.State, tokenContract.TotalSupply, tokenContract.Precision, tokenContract.TokenSymbol,
+		tokenContract.TokenName, tokenContract.Logo, tokenContract.Url, tokenContract.Description)
+	if err != nil {
+		return err
+	}
+	_ = res
+	return nil
+}
+
+func SaveTokenContract(tokenContract *TokenContractEntity) error {
+	stmt, err := dbConn.Prepare("INSERT INTO public.token_contract ("+tokenContractMainFieldsSql()+")" +
+		" VALUES (($1),($2), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19 )")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(tokenContract.BlockNum, tokenContract.BlockTime, tokenContract.Txid, tokenContract.ContractId, tokenContract.ContractType,
+	tokenContract.OwnerPubkey, tokenContract.OwnerAddr, tokenContract.RegisterTime, tokenContract.InheritFrom, tokenContract.GasPrice,
+		tokenContract.GasLimit, tokenContract.State, tokenContract.TotalSupply, tokenContract.Precision, tokenContract.TokenSymbol, tokenContract.TokenName,
+		tokenContract.Logo, tokenContract.Url, tokenContract.Description)
+	if err != nil {
+		return err
+	}
+	_ = res
+	//lastId, err := res.LastInsertId()
+	//if err != nil {
+	//	return err
+	//}
+	//tokenContract.Id = lastId
+	return nil
+}
+
+func SaveContractOpReceipt(contractOpReceipt *types.HxContractOpReceipt) error {
+	stmt, err := dbConn.Prepare("INSERT INTO public.contract_operation_receipt" +
+		" (trxid, block_num, op_num, api_result,  exec_succeed, actual_fee, invoker, contract_registered," +
+		" events, contract_withdraw_info, contract_balance_changes, deposit_to_address_changes," +
+		" deposit_to_contract_changes, transfer_fees) VALUES (($1),($2),($3),($4),($5),($6),($7),($8)," +
+		" ($9),($10),($11),($12),($13),($14) )")
 	if err != nil {
 		return err
 	}
@@ -340,14 +435,20 @@ func SaveContractOpReceipt(contractOpReceipt *nodeservice.HxContractOpReceipt) e
 	if err != nil {
 		return err
 	}
-	_, err = stmt.Exec(contractOpReceipt.Trxid, contractOpReceipt.BlockNum, contractOpReceipt.OpNum, contractOpReceipt.ApiResult, contractOpReceipt.ExecSucceed, contractOpReceipt.ActualFee, contractOpReceipt.Invoker, contractOpReceipt.ContractRegistered, string(eventsBytes), string(contractWithdrawInfoBytes), string(contractBalanceChangesBytes), string(depositToAddressChangesBytes), string(depositToContractChangesBytes), string(transferFeesBytes))
+	_, err = stmt.Exec(contractOpReceipt.Trxid, contractOpReceipt.BlockNum, contractOpReceipt.OpNum,
+		contractOpReceipt.ApiResult, contractOpReceipt.ExecSucceed, contractOpReceipt.ActualFee, contractOpReceipt.Invoker,
+		contractOpReceipt.ContractRegistered, string(eventsBytes), string(contractWithdrawInfoBytes),
+		string(contractBalanceChangesBytes), string(depositToAddressChangesBytes),
+		string(depositToContractChangesBytes), string(transferFeesBytes))
 	if err != nil {
 		return err
 	}
 	// save events to single table
 	if contractOpReceipt.Events != nil {
 		for _, event := range contractOpReceipt.Events {
-			stmt2, err := dbConn.Prepare("INSERT INTO public.contract_operation_receipt_event (trxid, block_num, op_num, caller_addr, contract_address, event_arg, event_name) VALUES (($1),($2),($3),($4),($5),($6),($7) )")
+			stmt2, err := dbConn.Prepare("INSERT INTO public.contract_operation_receipt_event" +
+				" (trxid, block_num, op_num, caller_addr, contract_address, event_arg, event_name)" +
+				" VALUES (($1),($2),($3),($4),($5),($6),($7) )")
 			if err != nil {
 				return err
 			}
@@ -375,8 +476,10 @@ func UpdateConfig(configEntity *ScanConfigEntity) error {
 	return nil
 }
 
-func SaveTransaction(tx *nodeservice.HxTransaction) error {
-	stmt, err := dbConn.Prepare("INSERT INTO public.transactions (id, ref_block_num, ref_block_prefix, expiration, operations_count, index_in_block, first_operation_type, txid) VALUES (($1),($2),($3),($4),($5),($6),($7),($8) )")
+func SaveTransaction(tx *types.HxTransaction) error {
+	stmt, err := dbConn.Prepare("INSERT INTO public.transactions (id, ref_block_num, ref_block_prefix," +
+		" expiration, operations_count, index_in_block, first_operation_type, txid)" +
+		" VALUES (($1),($2),($3),($4),($5),($6),($7),($8) )")
 	if err != nil {
 		return err
 	}

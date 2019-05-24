@@ -10,6 +10,7 @@ import (
 
 	"github.com/blocklink/hxscanner/wsjsonrpc/jsonrpc"
 	"golang.org/x/net/websocket"
+	"github.com/blocklink/hxscanner/src/types"
 )
 
 var _ws *websocket.Conn = nil
@@ -61,45 +62,6 @@ func IsHxNodeConnected() bool {
 	return _ws != nil
 }
 
-type TxidArgs struct {
-	Txid string `json:"txid"`
-}
-
-type HxTransaction struct {
-	BlockNum         uint32          `json:"block_num"`
-	Trxid            string          `json:"trxid"`
-	ContractId       string          `json:"contract_id"`
-	IndexInBlock     int             `json:"index_in_block"`
-	Expiration       string          `json:"expiration"`
-	Extensions       []interface{}   `json:"extensions"`
-	OperationResults []interface{}   `json:"operation_results"`
-	Operations       [][]interface{} `json:"operations"` // every item is [operationTypeInt, operationJson]
-	RefBlockNum      uint32          `json:"ref_block_num"`
-	RefBlockPrefix   uint64          `json:"ref_block_prefix"`
-	Signatures       []string        `json:"signatures"`
-}
-
-type HxFullTransactionExtraInfo struct {
-	BlockNum   uint32 `json:"block_num"`
-	Trxid      string `json:"trxid"`
-	ContractId string `json:"contract_id"`
-}
-
-type HxBlock struct {
-	BlockNumber           int              `json:"block_number"`
-	Extensions            []interface{}    `json:"extensions"`
-	Miner                 string           `json:"miner"`
-	MinerSignature        string           `json:"miner_signature"`
-	NextSecretHash        string           `json:"next_secret_hash"`
-	Previous              string           `json:"previous"`
-	PreviousSecret        string           `json:"previous_secret"`
-	Timestamp             string           `json:"timestamp"`
-	TransactionMerkleRoot string           `json:"transaction_merkle_root"`
-	Transactions          []*HxTransaction `json:"transactions"`
-	TransactionIds        []string         `json:"transaction_ids"`
-	Trxfee                int              `json:"trxfee"`
-}
-
 func GetKeysOfJson(val map[string]interface{}) []string {
 	result := make([]string, 0)
 	for k, _ := range val {
@@ -108,13 +70,13 @@ func GetKeysOfJson(val map[string]interface{}) []string {
 	return result
 }
 
-func GetBlock(blockNum int) (block *HxBlock, err error) {
+func GetBlock(blockNum int) (block *types.HxBlock, err error) {
 	if !IsHxNodeConnected() {
 		log.Println("ws to hx_node disconnected")
 		return
 	}
 	var wrapperReply interface{}
-	var reply = new(HxBlock)
+	var reply = new(types.HxBlock)
 	c := _client
 	err = c.Call("get_block", blockNum, &wrapperReply)
 	if err != nil {
@@ -141,7 +103,7 @@ func GetBlock(blockNum int) (block *HxBlock, err error) {
 	//	log.Println(string(replyJSONBytes), err)
 	//}
 	// fetch transaction ids
-	var fullTxsReply = make([]HxFullTransactionExtraInfo, 0)
+	var fullTxsReply = make([]types.HxFullTransactionExtraInfo, 0)
 	err = c.Call("fetch_block_transactions", blockNum, &fullTxsReply)
 	if err != nil {
 		log.Println("fetch_block_transactions error", err)
@@ -163,7 +125,7 @@ func IsContractOpType(operationType int) bool {
 	return operationType >= 76 && operationType <= 81
 }
 
-func CheckTransactionHasContractOp(txInfo *HxTransaction) bool {
+func CheckTransactionHasContractOp(txInfo *types.HxTransaction) bool {
 	for _, operationItemArray := range txInfo.Operations {
 		if len(operationItemArray) >= 2 {
 			if operationTypeNum, ok := operationItemArray[0].(json.Number); ok {
@@ -179,57 +141,14 @@ func CheckTransactionHasContractOp(txInfo *HxTransaction) bool {
 	return false
 }
 
-type HxContractOpReceiptEvent struct {
-	BlockNum        uint32 `json:"block_num"`
-	CallerAddr      string `json:"caller_addr"`
-	ContractAddress string `json:"contract_address"`
-	EventArg        string `json:"event_arg"`
-	EventName       string `json:"event_name"`
-	OpNum           int    `json:"op_num"`
-	Trxid           string `json:"trx_id"`
-}
 
-type HxContractOpReceipt struct {
-	Id                       string                      `json:"id"`
-	Trxid                    string                      `json:"trx_id"`
-	BlockNum                 uint32                      `json:"block_num"`
-	OpNum                    int                         `json:"op_num"`
-	ApiResult                string                      `json:"api_result"`
-	Events                   []*HxContractOpReceiptEvent `json:"events"`
-	ExecSucceed              bool                        `json:"exec_succeed"`
-	ActualFee                uint64                      `json:"acctual_fee"`
-	Invoker                  string                      `json:"invoker"`
-	ContractRegistered       string                      `json:"contract_registed"`
-	ContractWithdrawInfo     []interface{}               `json:"contract_withdraw"`
-	ContractBalanceChanges   []interface{}               `json:"contract_balances"`
-	DepositToAddressChanges  []interface{}               `json:"deposit_to_address"`
-	DepositToContractChanges []interface{}               `json:"deposit_contract"`
-	TransferFees             []interface{}               `json:"transfer_fees"`
-}
-
-func NewHxContractOpReceipt() *HxContractOpReceipt {
-	result := new(HxContractOpReceipt)
-	result.Events = make([]*HxContractOpReceiptEvent, 0)
-	result.ContractWithdrawInfo = make([]interface{}, 0)
-	result.ContractBalanceChanges = make([]interface{}, 0)
-	result.DepositToAddressChanges = make([]interface{}, 0)
-	result.DepositToContractChanges = make([]interface{}, 0)
-	result.TransferFees = make([]interface{}, 0)
-	return result
-}
-
-type HxContractTxReceipt struct {
-	OpReceipts                 []*HxContractOpReceipt
-	HasFailedContractOperation bool
-}
-
-func GetTxReceipts(txInfo *HxTransaction) (txReceipts *HxContractTxReceipt, err error) {
+func GetTxReceipts(txInfo *types.HxTransaction) (txReceipts *types.HxContractTxReceipt, err error) {
 	if !IsHxNodeConnected() {
 		log.Println("ws to hx_node disconnected")
 		return
 	}
-	txReceipts = new(HxContractTxReceipt)
-	txReceipts.OpReceipts = make([]*HxContractOpReceipt, 0)
+	txReceipts = new(types.HxContractTxReceipt)
+	txReceipts.OpReceipts = make([]*types.HxContractOpReceipt, 0)
 	c := _client
 	err = c.Call("get_contract_invoke_object", txInfo.Trxid, &(txReceipts.OpReceipts))
 	if err != nil {

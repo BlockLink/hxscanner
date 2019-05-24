@@ -12,6 +12,7 @@ import (
 	"github.com/blocklink/hxscanner/src/db"
 	"github.com/blocklink/hxscanner/src/nodeservice"
 	"github.com/blocklink/hxscanner/src/scanner"
+	"github.com/blocklink/hxscanner/src/plugins"
 )
 
 func main() {
@@ -44,6 +45,8 @@ func main() {
 		return
 	}
 	defer db.CloseDb()
+
+	scanner.AddScanPlugin(new(plugins.TokenContractCreateScanPlugin))
 
 	go func() {
 		lastScannedBlockNum, err := db.GetLastScannedBlockNumber()

@@ -10,6 +10,7 @@ import (
 	"github.com/blocklink/hxscanner/src/db"
 	"fmt"
 	"context"
+	"github.com/blocklink/hxscanner/src/types"
 )
 
 var tableSchemaCache = make(map[string]*db.PgTableSchema)
@@ -23,6 +24,22 @@ func cachedGetTableSchema(tableName string) (result *db.PgTableSchema, err error
 	result, err = db.GetTableSchema(tableName)
 	if err == nil && result != nil {
 		tableSchemaCache[tableName] = result
+	}
+	return
+}
+
+var scanPlugins = make([]OpScannerPlugin, 0)
+
+func AddScanPlugin(plugin OpScannerPlugin) {
+	scanPlugins = append(scanPlugins, plugin)
+}
+
+func ApplyPluginsToOperation(block *types.HxBlock, txid string, opType int, opTypeName string, opJSON map[string]interface{}, receipt *types.HxContractOpReceipt) (err error) {
+	for _, plugin := range scanPlugins {
+		err = plugin.ApplyOperation(block, txid, opType, opTypeName, opJSON, receipt)
+		if err != nil {
+			return
+		}
 	}
 	return
 }
@@ -76,7 +93,7 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 			txInfo := block.Transactions[txIndex]
 			//log.Println("tx index " + strconv.Itoa(txIndex) + " trxid " + txInfo.Trxid)
 			txHasContractOp := nodeservice.CheckTransactionHasContractOp(txInfo)
-			var txReceipts *nodeservice.HxContractTxReceipt = nil
+			var txReceipts *types.HxContractTxReceipt = nil
 			if txHasContractOp {
 				txReceipts, err = nodeservice.GetTxReceipts(txInfo)
 				if err != nil {
@@ -189,7 +206,7 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 						break
 					}
 				}
-				// TODO: insert into base operations table
+				// insert into base operations table
 				baseOperation := new(db.BaseOperationEntity)
 				baseOperation.OperationType = opTypeInt
 				baseOperation.OperationTypeName = opTypeName
@@ -205,7 +222,9 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 				var addr string
 				var addrObj interface{}
 				var addrFound = false
-				maybeAddrProps := []string {"addr", "from_addr", "caller_addr", "owner_addr", "miner_address", "payer", "fee_paying_account", "lock_balance_addr", "pay_back_owner", "bonus_owner", "fee_pay_address", "publisher_addr", "addr_from_claim", "issuer_addr"}
+				maybeAddrProps := []string {"addr", "from_addr", "caller_addr", "owner_addr", "miner_address",
+				"payer", "fee_paying_account", "lock_balance_addr", "pay_back_owner", "bonus_owner",
+				"fee_pay_address", "publisher_addr", "addr_from_claim", "issuer_addr"}
 				for _, prop := range maybeAddrProps {
 					if !addrFound {
 						addrObj, addrFound = opJson[prop]
@@ -231,6 +250,15 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 						log.Fatal("SaveBaseOperation error " + err.Error())
 						break
 					}
+				}
+				var receipt *types.HxContractOpReceipt = nil
+				if txReceipts != nil && len(txReceipts.OpReceipts) > opIndex {
+					receipt = txReceipts.OpReceipts[opIndex]
+				}
+				err = ApplyPluginsToOperation(block, txInfo.Trxid, opTypeInt, opTypeName, opJson, receipt)
+				if err != nil {
+					log.Fatal("apply plugin to op error", err)
+					break
 				}
 			}
 			if txHasContractOp && txReceipts != nil {
