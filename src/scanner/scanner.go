@@ -34,9 +34,9 @@ func AddScanPlugin(plugin OpScannerPlugin) {
 	scanPlugins = append(scanPlugins, plugin)
 }
 
-func ApplyPluginsToOperation(block *types.HxBlock, txid string, opType int, opTypeName string, opJSON map[string]interface{}, receipt *types.HxContractOpReceipt) (err error) {
+func ApplyPluginsToOperation(block *types.HxBlock, txid string, opIndex int, opType int, opTypeName string, opJSON map[string]interface{}, receipt *types.HxContractOpReceipt) (err error) {
 	for _, plugin := range scanPlugins {
-		err = plugin.ApplyOperation(block, txid, opType, opTypeName, opJSON, receipt)
+		err = plugin.ApplyOperation(block, txid, opIndex, opType, opTypeName, opJSON, receipt)
 		if err != nil {
 			return
 		}
@@ -255,7 +255,7 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 				if txReceipts != nil && len(txReceipts.OpReceipts) > opIndex {
 					receipt = txReceipts.OpReceipts[opIndex]
 				}
-				err = ApplyPluginsToOperation(block, txInfo.Trxid, opTypeInt, opTypeName, opJson, receipt)
+				err = ApplyPluginsToOperation(block, txInfo.Trxid, opIndex, opTypeInt, opTypeName, opJson, receipt)
 				if err != nil {
 					log.Fatal("apply plugin to op error", err)
 					break

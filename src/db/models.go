@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"log"
 	"math/big"
+	"github.com/shopspring/decimal"
+	"time"
 )
 
 var dbConn *sql.DB = nil
@@ -105,4 +107,30 @@ type TokenContractEntity struct {
 	Logo *string
 	Url *string
 	Description *string
+}
+
+// token合约各用户的余额
+type TokenBalanceEntity struct {
+	Id int64
+	ContractAddr string
+	OwnerAddr string
+	Amount decimal.Decimal
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// token合约的转账历史记录
+type TokenContractTransferHistoryEntity struct {
+	Id int64
+	ContractAddr string
+	FromAddr string
+	ToAddr string
+	Amount decimal.Decimal
+	BlockNum uint32
+	Txid string
+	OpNum uint32
+	EventName string
+	TxTime time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

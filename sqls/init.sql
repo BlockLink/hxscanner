@@ -140,3 +140,40 @@ CREATE TABLE "token_contract" (
 CREATE INDEX token_contract_contract_id_idx ON token_contract (contract_id);
 CREATE INDEX token_contract_contract_owner_addr_idx ON token_contract (owner_addr);
 CREATE INDEX token_contract_block_num_idx ON token_contract (block_num);
+
+CREATE TABLE "token_balance" (
+  id serial NOT NULL,
+  contract_addr varchar(100) NOT NULL,
+  owner_addr varchar(100) NOT NULL,
+  amount decimal(36, 18) NOT NULL,
+  created_at bigint NOT NULL,
+  updated_at bigint NOT NULL,
+  CONSTRAINT "pk_token_balance" PRIMARY KEY (id)
+);
+
+CREATE INDEX token_balance_contract_addr_idx ON token_balance (contract_addr);
+CREATE INDEX token_balance_contract_addr_and_owner_addr_idx ON token_balance (contract_addr, owner_addr);
+
+CREATE TABLE "token_contract_transfer_history" (
+  id serial NOT NULL,
+  contract_addr varchar(100) NOT NULL,
+  from_addr varchar(100) NOT NULL,
+  to_addr varchar(100) NOT NULL,
+  amount decimal(36, 18) NOT NULL,
+  block_num integer NOT NULL,
+  txid varchar(100) NOT NULL,
+  op_num integer NOT NULL,
+  event_name varchar(100) NOT NULL,
+  tx_time bigint NOT NULL,
+  created_at bigint NOT NULL,
+  updated_at bigint NOT NULL,
+  CONSTRAINT "pk_token_contract_transfer_history" PRIMARY KEY (id)
+);
+
+CREATE INDEX token_contract_transfer_history_contract_addr_idx ON token_contract_transfer_history (contract_addr);
+
+CREATE INDEX token_contract_transfer_history_txid_op_num_idx ON token_contract_transfer_history (txid, op_num);
+
+CREATE INDEX token_contract_transfer_history_from_addr_and_to_addr_idx ON token_contract_transfer_history (from_addr, to_addr);
+
+CREATE INDEX token_contract_transfer_history_contract_addr_and_from_addr_and_to_addr_idx ON token_contract_transfer_history (contract_addr, from_addr, to_addr);

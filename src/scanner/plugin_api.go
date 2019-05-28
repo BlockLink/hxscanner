@@ -5,5 +5,5 @@ import (
 )
 
 type OpScannerPlugin interface {
-	ApplyOperation(block *types.HxBlock, txid string, opType int, opTypeName string, opJSON map[string]interface{}, receipt *types.HxContractOpReceipt) (err error)
+	ApplyOperation(block *types.HxBlock, txid string, opNum int, opType int, opTypeName string, opJSON map[string]interface{}, receipt *types.HxContractOpReceipt) (err error)
 }
