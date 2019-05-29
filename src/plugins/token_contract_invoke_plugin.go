@@ -10,7 +10,7 @@ import (
 	"fmt"
 )
 
-// TODO: 扫描token合约的,init_token后触发事件导致state变化也要扫描. transfer记录，得到合约转账记录历史信息等
+// 扫描token合约的,init_token后触发事件导致state变化也要扫描. transfer记录，得到合约转账记录历史信息等
 
 type TokenContractInvokeScanPlugin struct {
 }
@@ -32,7 +32,8 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 		}
 		return dbTokenContract != nil, nil
 	}
-	txTime, err := time.Parse(time.RFC3339, block.Timestamp)
+	fmtLayout := "2006-01-02T15:04:05"
+	txTime, err := time.Parse(fmtLayout, block.Timestamp)
 	if err != nil {
 		log.Println("parse block timestamp error", err)
 		return

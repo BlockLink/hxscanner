@@ -47,6 +47,7 @@ func main() {
 	defer db.CloseDb()
 
 	scanner.AddScanPlugin(new(plugins.TokenContractCreateScanPlugin))
+	scanner.AddScanPlugin(new(plugins.TokenContractInvokeScanPlugin))
 
 	go func() {
 		lastScannedBlockNum, err := db.GetLastScannedBlockNumber()

@@ -362,7 +362,7 @@ func UpdateTokenContract(tokenContract *TokenContractEntity) error {
 		" contract_id = $4, contract_type = $5, owner_pubkey = $6, owner_addr = $7, register_time = $8," +
 		" inherit_from = $9, gas_price = $10," +
 		" gas_limit = $11, state = $12, total_supply = $13, precision = $14, token_symbol = $15," +
-		" token_name = $16, logo = $17, url = $19, description = $19 WHERE id=$20")
+		" token_name = $16, logo = $17, url = $18, description = $19 WHERE id=$20")
 	if err != nil {
 		return err
 	}
@@ -370,7 +370,7 @@ func UpdateTokenContract(tokenContract *TokenContractEntity) error {
 	res, err := stmt.Exec(tokenContract.BlockNum, tokenContract.BlockTime, tokenContract.Txid, tokenContract.ContractId,
 		tokenContract.ContractType, tokenContract.OwnerPubkey, tokenContract.OwnerAddr, tokenContract.RegisterTime, tokenContract.InheritFrom,
 		tokenContract.GasPrice, tokenContract.GasLimit, tokenContract.State, tokenContract.TotalSupply, tokenContract.Precision, tokenContract.TokenSymbol,
-		tokenContract.TokenName, tokenContract.Logo, tokenContract.Url, tokenContract.Description)
+		tokenContract.TokenName, tokenContract.Logo, tokenContract.Url, tokenContract.Description, tokenContract.Id)
 	if err != nil {
 		return err
 	}
