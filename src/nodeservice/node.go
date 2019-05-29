@@ -11,6 +11,7 @@ import (
 	"github.com/blocklink/hxscanner/wsjsonrpc/jsonrpc"
 	"golang.org/x/net/websocket"
 	"github.com/blocklink/hxscanner/src/types"
+	"strconv"
 )
 
 var _ws *websocket.Conn = nil
@@ -141,6 +142,42 @@ func CheckTransactionHasContractOp(txInfo *types.HxTransaction) bool {
 	return false
 }
 
+func InvokeContractOffline(callerPubKeyStr string, contractAddr, apiName string, apiArg string) (result string, err error) {
+	if !IsHxNodeConnected() {
+		log.Println("ws to hx_node disconnected")
+		return
+	}
+	var reply interface{}
+	c := _client
+	args := []interface{}{callerPubKeyStr, contractAddr, apiName, apiArg}
+	err = c.Call("invoke_contract_offline", args, &reply)
+	if err != nil {
+		log.Println("InvokeContractOffline error", err)
+		return
+	}
+	b, err := json.Marshal(reply)
+	if err != nil {
+		return
+	}
+	result = string(b)
+	log.Println("offline reply " + result)
+	return
+}
+
+func InvokeContractOfflineWithIntResult(callerPubKeyStr string, contractAddr, apiName string, apiArg string) (result int64, err error) {
+	strResult, err := InvokeContractOffline(callerPubKeyStr, contractAddr, apiName, apiArg)
+	if err != nil {
+		return
+	}
+	if len(strResult) >= 2 && strResult[0] == '"' {
+		err = json.Unmarshal([]byte(strResult), &strResult)
+		if err != nil {
+			return
+		}
+	}
+	result, err = strconv.ParseInt(strResult, 10, 64)
+	return
+}
 
 func GetTxReceipts(txInfo *types.HxTransaction) (txReceipts *types.HxContractTxReceipt, err error) {
 	if !IsHxNodeConnected() {

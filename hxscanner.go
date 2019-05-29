@@ -24,6 +24,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	nodeApiUrl := flag.String("node_endpoint", "ws://127.0.0.1:8090", "hx_node websocket rpc endpoint(=ws://127.0.0.1:8090)")
+	callerPubKey := flag.String("caller_pubkey", "HX5jfbqSFHm1XVUEg93NCym67z28WHmeUi3hqnem3o6Ad1BYsZA9", "contract default caller pubkey(=HX5jfbqSFHm1XVUEg93NCym67z28WHmeUi3hqnem3o6Ad1BYsZA9)")
 	dbHost := flag.String("db_host", "127.0.0.1", "postgresql database host(=127.0.0.1)")
 	dbPort := flag.Int("db_port", 5432, "postgresql database port(=5432)")
 	dbSslMode := flag.String("db_ssl", "disable", "postgresql connection ssl mode(=disable)")
@@ -35,6 +36,7 @@ func main() {
 
 	config.SystemConfig = new(config.Config)
 	config.SystemConfig.NodeApiUrl = *nodeApiUrl
+	config.SystemConfig.CallerPubKeyString = *callerPubKey
 	config.SystemConfig.DbConnectionString = fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s host=%s port=%d", *dbUser, *dbPassword, *dbName, *dbSslMode, *dbHost, *dbPort)
 
 	nodeservice.ConnectHxNode(ctx, config.SystemConfig.NodeApiUrl)

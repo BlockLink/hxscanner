@@ -8,6 +8,8 @@ import (
 	"time"
 	"github.com/shopspring/decimal"
 	"fmt"
+	"github.com/blocklink/hxscanner/src/nodeservice"
+	"github.com/blocklink/hxscanner/src/config"
 )
 
 // 扫描token合约的,init_token后触发事件导致state变化也要扫描. transfer记录，得到合约转账记录历史信息等
@@ -83,12 +85,14 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 					log.Println("invalid transfer token event arg " + eventArg)
 					continue
 				}
-				historyItem, err := db.FindTokenContractTransferHistoryItemByTxIdAndOpNum(txid, opNum)
+				var historyItem *db.TokenContractTransferHistoryEntity
+				historyItem, err = db.FindTokenContractTransferHistoryItemByTxIdAndOpNum(txid, opNum)
 				if err != nil {
 					log.Println("find token transfer history error", err)
 					continue
 				}
-				transferAmountDecimal, err := decimal.NewFromString(fmt.Sprintf("%d", transferArg.Amount))
+				var transferAmountDecimal decimal.Decimal
+				transferAmountDecimal, err = decimal.NewFromString(fmt.Sprintf("%d", transferArg.Amount))
 				if err != nil {
 					log.Println("decimal from int error", err)
 					continue
@@ -114,7 +118,56 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 						continue
 					}
 				}
-				// TODO: query and save from/to users(maybe same or empty) new token balance
+				// query and save from/to users(maybe same or empty) new token balance
+				usersToUpdate := make([]string, 0)
+				if len(transferArg.From) > 0 {
+					usersToUpdate = append(usersToUpdate, transferArg.From)
+				}
+				if len(transferArg.To) > 0 && transferArg.To != transferArg.From {
+					usersToUpdate = append(usersToUpdate, transferArg.To)
+				}
+				now := time.Now()
+				for _, userAddr := range usersToUpdate {
+					var userBalance int64
+					userBalance, err = nodeservice.InvokeContractOfflineWithIntResult(config.SystemConfig.CallerPubKeyString, contractId, "balanceOf", userAddr)
+					if err != nil {
+						log.Println("query token balance of " + userAddr + " in contract " + contractId + " error")
+						continue
+					}
+					var tokenBalanceItem *db.TokenBalanceEntity
+					tokenBalanceItem, err = db.FindTokenBalanceByContractAddrAndOwnerAddr(contractId, userAddr)
+					if err != nil {
+						log.Println("FindTokenBalanceByContractAddrAndOwnerAddr error", err)
+						return
+					}
+					var userBalanceDecimal decimal.Decimal
+					userBalanceDecimal, err = decimal.NewFromString(fmt.Sprintf("%d", userBalance))
+					if err != nil {
+						return
+					}
+					if tokenBalanceItem == nil {
+						tokenBalanceItem = &db.TokenBalanceEntity{
+							ContractAddr: contractId,
+							OwnerAddr: userAddr,
+							Amount: userBalanceDecimal,
+							CreatedAt: now,
+							UpdatedAt: now}
+						err = db.SaveTokenBalance(tokenBalanceItem)
+						if err != nil {
+							log.Println("SaveTokenBalance error", err)
+							return
+						}
+					} else {
+						tokenBalanceItem.UpdatedAt = now
+						tokenBalanceItem.Amount = userBalanceDecimal
+						err = db.UpdateTokenBalance(tokenBalanceItem)
+						if err != nil {
+							log.Println("UpdateTokenBalance error", err)
+							return
+						}
+					}
+
+				}
 			}
 		case "Approved":
 			{
