@@ -89,6 +89,23 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 				break
 			}
 		}
+		// 取到block后，修改它上一个块的block_hash
+		if block.BlockNumber > 1 {
+			prevBlock, err := db.FindBlock(block.BlockNumber-1)
+			if err != nil {
+				log.Println("find block at #" + strconv.Itoa(block.BlockNumber - 1) + " with error " + err.Error())
+				break
+			}
+			if prevBlock != nil && (prevBlock.BlockId == "" || prevBlock.BlockId=="TODO") {
+				prevBlock.BlockId = block.Previous
+				err = db.UpdateBlockHash(int(prevBlock.Number), prevBlock.BlockId)
+				if err != nil {
+					log.Println("UpdateBlock #" + strconv.Itoa(int(prevBlock.Number)) + " error")
+					break
+				}
+			}
+		}
+
 		for txIndex := 0;txIndex < len(block.Transactions);txIndex++ {
 			txInfo := block.Transactions[txIndex]
 			//log.Println("tx index " + strconv.Itoa(txIndex) + " trxid " + txInfo.Trxid)

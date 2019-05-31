@@ -35,7 +35,7 @@ type BlockEntity struct {
 	Miner string
 	TransactionMerkleRoot string
 	NextSecretHash string
-	BlockId string
+	BlockId string // TODO: 扫描后塞入失败
 	Reward uint64
 	TxsCount int
 }
@@ -49,6 +49,7 @@ type TransactionEntity struct {
 	IndexInBlock int
 	FirstOperationType int
 	Txid string
+	// TODO: 增加BlockNum
 }
 
 type BaseOperationEntity struct {

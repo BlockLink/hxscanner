@@ -69,6 +69,7 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 						log.Println("update token contract error", err)
 						continue
 					}
+					// TODO: query tokenName, tokenSymbol, totalSupply, precision
 				}
 			}
 		case "Transfer":
@@ -166,8 +167,8 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 							return
 						}
 					}
-
 				}
+				// TODO: if fromAddr or toAddr is empty, query totalSupply from node
 			}
 		case "Approved":
 			{

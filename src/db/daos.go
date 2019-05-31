@@ -267,21 +267,30 @@ func FindTransaction(txid string) (result *TransactionEntity, err error) {
 func SaveBlock(block *types.HxBlock) error {
 	stmt, err := dbConn.Prepare("INSERT INTO public.blocks" +
 		" (id, number, previous, timestamp, trxfee, miner, transaction_merkle_root, next_secret_hash," +
-		" block_id, reward, txs_count) VALUES (($1),($2),($3),($4),($5),($6),($7),($8),($9),($10),($11) )")
+		" reward, txs_count, block_id) VALUES (($1),($2),($3),($4),($5),($6),($7),($8),($9),($10),($11) )")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(block.BlockNumber, block.BlockNumber, block.Previous, block.Timestamp, block.Trxfee, block.Miner, block.TransactionMerkleRoot, block.NextSecretHash, "", 0, len(block.Transactions))
+	res, err := stmt.Exec(block.BlockNumber, block.BlockNumber, block.Previous, block.Timestamp, block.Trxfee, block.Miner, block.TransactionMerkleRoot, block.NextSecretHash, 0, len(block.Transactions), "TODO")
 	if err != nil {
 		return err
 	}
 	_ = res
-	//lastId, err := res.LastInsertId()
-	//if err != nil {
-	//	return err
-	//}
-	//log.Println("last block record id " + strconv.Itoa(int(lastId)))
+	return nil
+}
+
+func UpdateBlockHash(blockNumber int, blockHash string) error {
+	stmt, err := dbConn.Prepare("UPDATE public.blocks set block_id = $1 where number = $2")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	res, err := stmt.Exec(blockHash, blockNumber)
+	if err != nil {
+		return err
+	}
+	_ = res
 	return nil
 }
 
