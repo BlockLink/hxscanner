@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/blocklink/hxscanner/src/nodeservice"
 	"github.com/blocklink/hxscanner/src/config"
+	"math/big"
 )
 
 // 扫描token合约的,init_token后触发事件导致state变化也要扫描. transfer记录，得到合约转账记录历史信息等
@@ -64,12 +65,29 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 				if tokenContract != nil {
 					state := "common"
 					tokenContract.State = &state
+
+					// query tokenName, tokenSymbol, totalSupply, precision
+					precision := new(uint32)
+					tokenName := new(string)
+					tokenSymbol := new(string)
+					*tokenName, *tokenSymbol, *precision, err = queryTokenContractBaseInfo(contractId)
+					if err == nil {
+						tokenContract.TokenName = tokenName
+						tokenContract.TokenSymbol = tokenSymbol
+						tokenContract.Precision = precision
+					}
+					totalSupply := new(int64)
+					*totalSupply, err = queryTokenContractTotalSupply(contractId)
+					if err == nil {
+						totalSupplyBig := big.NewInt(*totalSupply)
+						tokenContract.TotalSupply = totalSupplyBig
+					}
+
 					err = db.UpdateTokenContract(tokenContract)
 					if err != nil {
 						log.Println("update token contract error", err)
 						continue
 					}
-					// TODO: query tokenName, tokenSymbol, totalSupply, precision
 				}
 			}
 		case "Transfer":
@@ -168,7 +186,24 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 						}
 					}
 				}
-				// TODO: if fromAddr or toAddr is empty, query totalSupply from node
+				// if fromAddr or toAddr is empty, query totalSupply from node
+				if len(transferArg.From) < 1 || len(transferArg.To) < 1 {
+					var tokenContract *db.TokenContractEntity
+					tokenContract, err = db.FindTokenContractByContractId(contractId)
+					if err == nil {
+						totalSupply := new(int64)
+						*totalSupply, err = queryTokenContractTotalSupply(contractId)
+						if err == nil {
+							totalSupplyBig := big.NewInt(*totalSupply)
+							tokenContract.TotalSupply = totalSupplyBig
+							err = db.UpdateTokenContract(tokenContract)
+							if err != nil {
+								log.Println("update token contract totalSupply error", err)
+								return
+							}
+						}
+					}
+				}
 			}
 		case "Approved":
 			{

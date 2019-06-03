@@ -5,6 +5,10 @@ import (
 	"log"
 	"errors"
 	"github.com/blocklink/hxscanner/src/db"
+	"github.com/blocklink/hxscanner/src/nodeservice"
+	"github.com/blocklink/hxscanner/src/config"
+	"encoding/json"
+	"math/big"
 )
 
 type TokenContractCreateScanPlugin struct {
@@ -104,6 +108,45 @@ func decodeTokenRegisterOperation(opJSON map[string]interface{}) (result *contra
 	return
 }
 
+func queryTokenContractBaseInfo(contractId string) (tokenName string, tokenSymbol string, precision uint32, err error) {
+	conf := config.SystemConfig
+	tokenName, err = nodeservice.InvokeContractOffline(conf.CallerPubKeyString, contractId, "tokenName", "")
+	if err != nil {
+		return
+	}
+	if len(tokenName) > 1 && tokenName[0] == '"' {
+		err = json.Unmarshal([]byte(tokenName), &tokenName)
+		if err != nil {
+			return
+		}
+	}
+	tokenSymbol, err = nodeservice.InvokeContractOffline(conf.CallerPubKeyString, contractId, "tokenSymbol", "")
+	if err != nil {
+		return
+	}
+	if len(tokenSymbol) > 1 && tokenSymbol[0] == '"' {
+		err = json.Unmarshal([]byte(tokenSymbol), &tokenSymbol)
+		if err != nil {
+			return
+		}
+	}
+	precisionInt, err := nodeservice.InvokeContractOfflineWithIntResult(conf.CallerPubKeyString, contractId, "precision", "")
+	if err != nil {
+		return
+	}
+	precision = uint32(precisionInt)
+	return
+}
+
+func queryTokenContractTotalSupply(contractId string) (totalSupply int64, err error) {
+	conf := config.SystemConfig
+	totalSupply, err = nodeservice.InvokeContractOfflineWithIntResult(conf.CallerPubKeyString, contractId, "totalSupply", "")
+	if err != nil {
+		return
+	}
+	return
+}
+
 func (plugin *TokenContractCreateScanPlugin) ApplyOperation(block *types.HxBlock, txid string, opNum int, opType int, opTypeName string,
 	opJSON map[string]interface{}, receipt *types.HxContractOpReceipt) (err error) {
 	if opTypeName == "contract_register_operation" {
@@ -129,7 +172,25 @@ func (plugin *TokenContractCreateScanPlugin) ApplyOperation(block *types.HxBlock
 		}
 
 		log.Println("found a token contract")
-		// TODO: 调用合约查询token的基本属性
+		// 调用合约查询token的基本属性
+		precision := new(uint32)
+		tokenName := new(string)
+		tokenSymbol := new(string)
+		*tokenName, *tokenSymbol, *precision, err = queryTokenContractBaseInfo(contractOp.ContractId)
+		if err != nil {
+			tokenName = nil
+			tokenSymbol = nil
+			precision = nil
+		}
+		totalSupply := new(int64)
+		totalSupplyBig := big.NewInt(0)
+		*totalSupply, err = queryTokenContractTotalSupply(contractOp.ContractId)
+		if err != nil {
+			totalSupply = nil
+			totalSupplyBig = nil
+		} else {
+			totalSupplyBig = big.NewInt(*totalSupply)
+		}
 		// save to db
 		var dbTokenContract *db.TokenContractEntity
 		dbTokenContract, err = db.FindTokenContractByContractId(contractOp.ContractId)
@@ -150,10 +211,10 @@ func (plugin *TokenContractCreateScanPlugin) ApplyOperation(block *types.HxBlock
 				GasPrice:     uint64(contractOp.GasPrice),
 				GasLimit:     uint64(contractOp.GasLimit),
 				State:        nil,
-				TotalSupply:  nil,
-				Precision:    nil,
-				TokenSymbol:  nil,
-				TokenName:    nil,
+				TotalSupply:  totalSupplyBig,
+				Precision:    precision,
+				TokenSymbol:  tokenSymbol,
+				TokenName:    tokenName,
 				Logo:         nil,
 				Url:          nil,
 				Description:  nil}

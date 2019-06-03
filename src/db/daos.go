@@ -10,6 +10,7 @@ import (
 	"github.com/blocklink/hxscanner/src/config"
 	"github.com/blocklink/hxscanner/src/types"
 	"github.com/pkg/errors"
+	"math/big"
 )
 
 func GetScanConfigOr(configKey string, elseValue string) (string, error) {
@@ -348,12 +349,17 @@ func FindTokenContractByContractId(contractId string) (result *TokenContractEnti
 	defer rows.Close()
 	if rows.Next() {
 		result = new(TokenContractEntity)
+		var totalSupplyString *string
 		err = rows.Scan(&result.Id, &result.BlockNum, &result.BlockTime, &result.Txid,
 			&result.ContractId, &result.ContractType, &result.OwnerPubkey, &result.OwnerAddr, &result.RegisterTime,
-			&result.InheritFrom, &result.GasPrice, &result.GasLimit, &result.State, &result.TotalSupply, &result.Precision,
+			&result.InheritFrom, &result.GasPrice, &result.GasLimit, &result.State, &totalSupplyString, &result.Precision,
 				&result.TokenSymbol, &result.TokenName, &result.Logo, &result.Url, &result.Description)
 		if err != nil {
 			return
+		}
+		if totalSupplyString != nil {
+			result.TotalSupply = big.NewInt(0)
+			result.TotalSupply, _ = result.TotalSupply.SetString(*totalSupplyString, 10)
 		}
 		return
 	} else {
@@ -376,9 +382,14 @@ func UpdateTokenContract(tokenContract *TokenContractEntity) error {
 		return err
 	}
 	defer stmt.Close()
+	var totalSupplyStr *string = nil
+	if tokenContract.TotalSupply != nil {
+		totalSupplyStr = new(string)
+		*totalSupplyStr = tokenContract.TotalSupply.String()
+	}
 	res, err := stmt.Exec(tokenContract.BlockNum, tokenContract.BlockTime, tokenContract.Txid, tokenContract.ContractId,
 		tokenContract.ContractType, tokenContract.OwnerPubkey, tokenContract.OwnerAddr, tokenContract.RegisterTime, tokenContract.InheritFrom,
-		tokenContract.GasPrice, tokenContract.GasLimit, tokenContract.State, tokenContract.TotalSupply, tokenContract.Precision, tokenContract.TokenSymbol,
+		tokenContract.GasPrice, tokenContract.GasLimit, tokenContract.State, totalSupplyStr, tokenContract.Precision, tokenContract.TokenSymbol,
 		tokenContract.TokenName, tokenContract.Logo, tokenContract.Url, tokenContract.Description, tokenContract.Id)
 	if err != nil {
 		return err
@@ -394,9 +405,14 @@ func SaveTokenContract(tokenContract *TokenContractEntity) error {
 		return err
 	}
 	defer stmt.Close()
+	var totalSupplyStr *string = nil
+	if tokenContract.TotalSupply != nil {
+		totalSupplyStr = new(string)
+		*totalSupplyStr = tokenContract.TotalSupply.String()
+	}
 	res, err := stmt.Exec(tokenContract.BlockNum, tokenContract.BlockTime, tokenContract.Txid, tokenContract.ContractId, tokenContract.ContractType,
 	tokenContract.OwnerPubkey, tokenContract.OwnerAddr, tokenContract.RegisterTime, tokenContract.InheritFrom, tokenContract.GasPrice,
-		tokenContract.GasLimit, tokenContract.State, tokenContract.TotalSupply, tokenContract.Precision, tokenContract.TokenSymbol, tokenContract.TokenName,
+		tokenContract.GasLimit, tokenContract.State, totalSupplyStr, tokenContract.Precision, tokenContract.TokenSymbol, tokenContract.TokenName,
 		tokenContract.Logo, tokenContract.Url, tokenContract.Description)
 	if err != nil {
 		return err

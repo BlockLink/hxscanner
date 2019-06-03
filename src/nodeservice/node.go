@@ -152,7 +152,7 @@ func InvokeContractOffline(callerPubKeyStr string, contractAddr, apiName string,
 	args := []interface{}{callerPubKeyStr, contractAddr, apiName, apiArg}
 	err = c.Call("invoke_contract_offline", args, &reply)
 	if err != nil {
-		log.Println("InvokeContractOffline error", err)
+		//log.Println("InvokeContractOffline error", err)
 		return
 	}
 	b, err := json.Marshal(reply)
