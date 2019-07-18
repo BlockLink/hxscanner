@@ -6,6 +6,8 @@ scanner for hx blockchain
 # Usage
 
 * install golang
+* git clone this repo to $GOPATH or `go get github.com/BlockLink/hxscanner`
+* cd to this repo path
 * `./install_deps.sh`
 * `docker swarm init`
 * `docker stack deploy -c stack.yml postgres` and then `docker service ls` to view postgresql instance. You can also create postgresql database manually.
