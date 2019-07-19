@@ -10,7 +10,7 @@ var OperationNames = []string {
 	"limit_order_create_operation",
 	"limit_order_cancel_operation",
 	"call_order_update_operation",
-	"fill_order_operation",
+	"fill_order_operation",         
 	"account_create_operation",
 	"account_update_operation",
 	"account_whitelist_operation",
@@ -57,9 +57,9 @@ var OperationNames = []string {
 	"transfer_to_blind_operation",
 	"blind_transfer_operation",
 	"transfer_from_blind_operation",
-	"asset_settle_cancel_operation",
+	"asset_settle_cancel_operation",  
 	"asset_claim_fees_operation",
-	"fba_distribute_operation",
+	"fba_distribute_operation",        
 	"committee_member_execute_coin_destory_operation",
 	"lockbalance_operation",
 	"foreclose_balance_operation",
@@ -127,6 +127,11 @@ var OperationNames = []string {
 	"add_whiteOperation_list_operation",
 	"cancel_whiteOperation_list_operation",
 	"set_balance_operation",
+	"correct_chain_data_operation",
+	"vote_create_operation",
+	"vote_update_operation",
+	"undertaker_operation",
+	"name_transfer_operation"
 }
 
 func GetOperationNameByOperationType(operationType int) (string, error) {
