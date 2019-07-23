@@ -4,7 +4,6 @@ import (
 	"github.com/blocklink/hxscanner/src/types"
 	"github.com/blocklink/hxscanner/src/db"
 	"encoding/json"
-	"log"
 	"time"
 	"github.com/shopspring/decimal"
 	"fmt"
@@ -38,7 +37,7 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 	fmtLayout := "2006-01-02T15:04:05"
 	txTime, err := time.Parse(fmtLayout, block.Timestamp)
 	if err != nil {
-		log.Println("parse block timestamp error", err)
+		logger.Println("parse block timestamp error", err)
 		return
 	}
 	for _, event := range receipt.Events {
@@ -59,7 +58,7 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 			{
 				tokenContract, err := db.FindTokenContractByContractId(contractId)
 				if err != nil {
-					log.Println("find token contract error", err)
+					logger.Println("find token contract error", err)
 					continue
 				}
 				if tokenContract != nil {
@@ -85,7 +84,7 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 
 					err = db.UpdateTokenContract(tokenContract)
 					if err != nil {
-						log.Println("update token contract error", err)
+						logger.Println("update token contract error", err)
 						continue
 					}
 				}
@@ -101,19 +100,19 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 				transferArg := new(transferEventArgType)
 				err = json.Unmarshal(eventArgBytes, transferArg)
 				if err != nil {
-					log.Println("invalid transfer token event arg " + eventArg)
+					logger.Println("invalid transfer token event arg " + eventArg)
 					continue
 				}
 				var historyItem *db.TokenContractTransferHistoryEntity
 				historyItem, err = db.FindTokenContractTransferHistoryItemByTxIdAndOpNum(txid, opNum)
 				if err != nil {
-					log.Println("find token transfer history error", err)
+					logger.Println("find token transfer history error", err)
 					continue
 				}
 				var transferAmountDecimal decimal.Decimal
 				transferAmountDecimal, err = decimal.NewFromString(fmt.Sprintf("%d", transferArg.Amount))
 				if err != nil {
-					log.Println("decimal from int error", err)
+					logger.Println("decimal from int error", err)
 					continue
 				}
 				if historyItem == nil {
@@ -133,7 +132,7 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 						UpdatedAt: now}
 					err = db.SaveTokenContractTransferHistory(historyItem)
 					if err != nil {
-						log.Println("save token transfer history error", err)
+						logger.Println("save token transfer history error", err)
 						continue
 					}
 				}
@@ -150,13 +149,13 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 					var userBalance int64
 					userBalance, err = nodeservice.InvokeContractOfflineWithIntResult(config.SystemConfig.CallerPubKeyString, contractId, "balanceOf", userAddr)
 					if err != nil {
-						log.Println("query token balance of " + userAddr + " in contract " + contractId + " error")
+						logger.Println("query token balance of " + userAddr + " in contract " + contractId + " error")
 						continue
 					}
 					var tokenBalanceItem *db.TokenBalanceEntity
 					tokenBalanceItem, err = db.FindTokenBalanceByContractAddrAndOwnerAddr(contractId, userAddr)
 					if err != nil {
-						log.Println("FindTokenBalanceByContractAddrAndOwnerAddr error", err)
+						logger.Println("FindTokenBalanceByContractAddrAndOwnerAddr error", err)
 						return
 					}
 					var userBalanceDecimal decimal.Decimal
@@ -173,7 +172,7 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 							UpdatedAt: now}
 						err = db.SaveTokenBalance(tokenBalanceItem)
 						if err != nil {
-							log.Println("SaveTokenBalance error", err)
+							logger.Println("SaveTokenBalance error", err)
 							return
 						}
 					} else {
@@ -181,7 +180,7 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 						tokenBalanceItem.Amount = userBalanceDecimal
 						err = db.UpdateTokenBalance(tokenBalanceItem)
 						if err != nil {
-							log.Println("UpdateTokenBalance error", err)
+							logger.Println("UpdateTokenBalance error", err)
 							return
 						}
 					}
@@ -198,7 +197,7 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 							tokenContract.TotalSupply = totalSupplyBig
 							err = db.UpdateTokenContract(tokenContract)
 							if err != nil {
-								log.Println("update token contract totalSupply error", err)
+								logger.Println("update token contract totalSupply error", err)
 								return
 							}
 						}

@@ -23,7 +23,7 @@ func SaveTokenBalance(tokenBalance *TokenBalanceEntity) error {
 	//if err != nil {
 	//	return err
 	//}
-	//log.Println("last tx record id " + strconv.Itoa(int(lastId)))
+	//logger.Println("last tx record id " + strconv.Itoa(int(lastId)))
 	return nil
 }
 

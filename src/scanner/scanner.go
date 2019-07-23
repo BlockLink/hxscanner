@@ -2,7 +2,6 @@ package scanner
 
 import (
 	"github.com/blocklink/hxscanner/src/nodeservice"
-	"log"
 	"strconv"
 	"time"
 	"reflect"
@@ -11,7 +10,10 @@ import (
 	"fmt"
 	"context"
 	"github.com/blocklink/hxscanner/src/types"
+	"github.com/blocklink/hxscanner/src/log"
 )
+
+var logger = log.GetLogger()
 
 var tableSchemaCache = make(map[string]*db.PgTableSchema)
 
@@ -62,14 +64,14 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 		// TODO: use channel to produce fetched-blocks goroutine and store goroutine
 		block, err := nodeservice.GetBlock(scannedBlockNum)
 		if err != nil {
-			log.Println("got block at #" + strconv.Itoa(scannedBlockNum) + " with error "+ err.Error())
+			logger.Println("got block at #" + strconv.Itoa(scannedBlockNum) + " with error "+ err.Error())
 			break
 		}
 		if block == nil {
-			log.Println("scanned block #" + strconv.Itoa(scannedBlockNum-1))
+			logger.Println("scanned block #" + strconv.Itoa(scannedBlockNum-1))
 			err = db.UpdateLastScannedBlockNumber(scannedBlockNum-1)
 			if err != nil {
-				log.Fatal("UpdateLastScannedBlockNumber error " + err.Error())
+				logger.Fatal("UpdateLastScannedBlockNumber error " + err.Error())
 				break
 			}
 			time.Sleep(5 * time.Second)
@@ -79,13 +81,13 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 		// save block
 		oldBlock, err := db.FindBlock(block.BlockNumber)
 		if err != nil {
-			log.Println("find block at #" + strconv.Itoa(scannedBlockNum) + " with error "+ err.Error())
+			logger.Println("find block at #" + strconv.Itoa(scannedBlockNum) + " with error "+ err.Error())
 			break
 		}
 		if oldBlock == nil {
 			err = db.SaveBlock(block)
 			if err != nil {
-				log.Println("save block to db error " + err.Error())
+				logger.Println("save block to db error " + err.Error())
 				break
 			}
 		}
@@ -93,14 +95,14 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 		if block.BlockNumber > 1 {
 			prevBlock, err := db.FindBlock(block.BlockNumber-1)
 			if err != nil {
-				log.Println("find block at #" + strconv.Itoa(block.BlockNumber - 1) + " with error " + err.Error())
+				logger.Println("find block at #" + strconv.Itoa(block.BlockNumber - 1) + " with error " + err.Error())
 				break
 			}
 			if prevBlock != nil && (prevBlock.BlockId == "" || prevBlock.BlockId=="TODO") {
 				prevBlock.BlockId = block.Previous
 				err = db.UpdateBlockHash(int(prevBlock.Number), prevBlock.BlockId)
 				if err != nil {
-					log.Println("UpdateBlock #" + strconv.Itoa(int(prevBlock.Number)) + " error")
+					logger.Println("UpdateBlock #" + strconv.Itoa(int(prevBlock.Number)) + " error")
 					break
 				}
 			}
@@ -108,13 +110,13 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 
 		for txIndex := 0;txIndex < len(block.Transactions);txIndex++ {
 			txInfo := block.Transactions[txIndex]
-			//log.Println("tx index " + strconv.Itoa(txIndex) + " trxid " + txInfo.Trxid)
+			//logger.Println("tx index " + strconv.Itoa(txIndex) + " trxid " + txInfo.Trxid)
 			txHasContractOp := nodeservice.CheckTransactionHasContractOp(txInfo)
 			var txReceipts *types.HxContractTxReceipt = nil
 			if txHasContractOp {
 				txReceipts, err = nodeservice.GetTxReceipts(txInfo)
 				if err != nil {
-					log.Println("get tx receipts when txid " + txInfo.Trxid + " error " +err.Error())
+					logger.Println("get tx receipts when txid " + txInfo.Trxid + " error " +err.Error())
 					break
 				}
 			}
@@ -122,13 +124,13 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 			// find or save txs
 			oldTx, err := db.FindTransaction(txInfo.Trxid)
 			if err != nil {
-				log.Println("find tx at #" + strconv.Itoa(scannedBlockNum) + " with error "+ err.Error())
+				logger.Println("find tx at #" + strconv.Itoa(scannedBlockNum) + " with error "+ err.Error())
 				break
 			}
 			if oldTx == nil {
 				err = db.SaveTransaction(txInfo)
 				if err != nil {
-					log.Println("save tx to db error " + err.Error())
+					logger.Println("save tx to db error " + err.Error())
 					break
 				}
 			}
@@ -136,24 +138,24 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 			for opIndex := 0;opIndex < len(txInfo.Operations);opIndex++ {
 				opPair := txInfo.Operations[opIndex]
 				if len(opPair) != 2 {
-					log.Println("invalid operation pair size(require 2 and got " + strconv.Itoa(len(opPair)) + ")")
+					logger.Println("invalid operation pair size(require 2 and got " + strconv.Itoa(len(opPair)) + ")")
 					break
 				}
 				var ok bool
 				var opTypeNumber json.Number
 				if opTypeNumber, ok = opPair[0].(json.Number); !ok {
 					t := reflect.TypeOf(opPair[0])
-					log.Println("invalid operation type type " + t.Name())
+					logger.Println("invalid operation type type " + t.Name())
 					break
 				}
 				opTypeInt, err := strconv.Atoi(opTypeNumber.String())
 				if err != nil {
-					log.Println("parse operation type error " + err.Error())
+					logger.Println("parse operation type error " + err.Error())
 					break
 				}
 				var opJson map[string]interface{}
 				if opJson, ok = opPair[1].(map[string]interface{}); !ok {
-					log.Println("invalid operation json type")
+					logger.Println("invalid operation json type")
 					break
 				}
 				opJson["block_num"] = block.BlockNumber
@@ -166,16 +168,16 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 				}
 				opTypeName, err := nodeservice.GetOperationNameByOperationType(opTypeInt)
 				if err != nil {
-					log.Println("get operation name error " + err.Error())
+					logger.Println("get operation name error " + err.Error())
 					break
 				}
 				//operationKeys := nodeservice.GetKeysOfJson(opJson)
-				//log.Println("operation " + opTypeName + " has " + strconv.Itoa(len(operationKeys)) + " keys")
+				//logger.Println("operation " + opTypeName + " has " + strconv.Itoa(len(operationKeys)) + " keys")
 				operationTableName := nodeservice.GetOperationTableNameByOperationName(opTypeName)
 				// create operation table and find-or-save operation columns and save operations
 				opTableExist, err := db.CheckTableExist(operationTableName)
 				if err != nil {
-					log.Println("CheckTableExist error " + err.Error())
+					logger.Println("CheckTableExist error " + err.Error())
 					break
 				}
 				if !opTableExist {
@@ -193,7 +195,7 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 					}
 					err = db.CreateTable(operationTableName, opTableColumnSqls, "")
 					if err != nil {
-						log.Fatal("create operation table " + operationTableName + " error " + err.Error())
+						logger.Fatal("create operation table " + operationTableName + " error " + err.Error())
 						break
 					}
 					// create op index
@@ -201,25 +203,25 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 					createIndexSql := fmt.Sprintf("CREATE INDEX %s ON %s(trxid, index_in_tx)", indexName, operationTableName)
 					err = db.ExecSql(createIndexSql)
 					if err != nil {
-						log.Fatal("create operation table index error " + err.Error())
+						logger.Fatal("create operation table index error " + err.Error())
 						break
 					}
 				}
 				opExistInDb, err := db.CheckOperationExist(operationTableName, txInfo.Trxid, opIndex)
 				if err != nil {
-					log.Fatal("CheckOperationExist when txid=" + txInfo.Trxid + " op #" + strconv.Itoa(opIndex) + " error " + err.Error())
+					logger.Fatal("CheckOperationExist when txid=" + txInfo.Trxid + " op #" + strconv.Itoa(opIndex) + " error " + err.Error())
 					break
 				}
 				if !opExistInDb {
 					// save operation
 					opTableSchema, err := cachedGetTableSchema(operationTableName)
 					if err != nil {
-						log.Fatal("get operation table schema error " + err.Error())
+						logger.Fatal("get operation table schema error " + err.Error())
 						break
 					}
 					err = db.InsertDynamicOperation(operationTableName, opTableSchema, opJson)
 					if err != nil {
-						log.Fatal("InsertDynamicOperation to table " + operationTableName + " error " + err.Error())
+						logger.Fatal("InsertDynamicOperation to table " + operationTableName + " error " + err.Error())
 						break
 					}
 				}
@@ -232,7 +234,7 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 				baseOperation.Trxid = txInfo.Trxid
 				opJSONBytes, err := json.Marshal(opJson)
 				if err != nil {
-					log.Fatal("json marshal operation error "+ err.Error())
+					logger.Fatal("json marshal operation error "+ err.Error())
 					break
 				}
 				baseOperation.OperationJSON = string(opJSONBytes)
@@ -258,13 +260,13 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 				baseOperation.Id = db.GetBaseOperationId(baseOperation.BlockNum, baseOperation.Trxid, opIndex)
 				oldBaseOpInDb, err := db.FindBaseOperation(baseOperation.Id)
 				if err != nil {
-					log.Println("find base operation at " +baseOperation.Id+ " with error "+ err.Error())
+					logger.Println("find base operation at " +baseOperation.Id+ " with error "+ err.Error())
 					break
 				}
 				if oldBaseOpInDb == nil {
 					err = db.SaveBaseOperation(baseOperation)
 					if err != nil {
-						log.Fatal("SaveBaseOperation error " + err.Error())
+						logger.Fatal("SaveBaseOperation error " + err.Error())
 						break
 					}
 				}
@@ -274,7 +276,7 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 				}
 				err = ApplyPluginsToOperation(block, txInfo.Trxid, opIndex, opTypeInt, opTypeName, opJson, receipt)
 				if err != nil {
-					log.Fatal("apply plugin to op error", err)
+					logger.Fatal("apply plugin to op error", err)
 					break
 				}
 			}
@@ -282,13 +284,13 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 				for _, opReceipt := range txReceipts.OpReceipts {
 					oldDbOpReceipt, err := db.FindContractOpReceipt(opReceipt.Trxid, opReceipt.OpNum)
 					if err != nil {
-						log.Fatal("FindContractOpReceipt error " + err.Error())
+						logger.Fatal("FindContractOpReceipt error " + err.Error())
 						break
 					}
 					if oldDbOpReceipt == nil {
 						err = db.SaveContractOpReceipt(opReceipt)
 						if err != nil {
-							log.Fatal("SaveContractOpReceipt error " + err.Error())
+							logger.Fatal("SaveContractOpReceipt error " + err.Error())
 							break
 						}
 					}
@@ -296,10 +298,10 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 			}
 		}
 		if scannedBlockNum % 100 == 0 {
-			log.Println("scanned block #" + strconv.Itoa(scannedBlockNum))
+			logger.Println("scanned block #" + strconv.Itoa(scannedBlockNum))
 			err = db.UpdateLastScannedBlockNumber(scannedBlockNum)
 			if err != nil {
-				log.Fatal("UpdateLastScannedBlockNumber error " + err.Error())
+				logger.Fatal("UpdateLastScannedBlockNumber error " + err.Error())
 				break
 			}
 		}

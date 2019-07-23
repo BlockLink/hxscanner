@@ -3,7 +3,6 @@ package db
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -312,7 +311,7 @@ func SaveBaseOperation(operation *BaseOperationEntity) error {
 	//if err != nil {
 	//	return err
 	//}
-	//log.Println("last block record id " + strconv.Itoa(int(lastId)))
+	//logger.Println("last block record id " + strconv.Itoa(int(lastId)))
 	return nil
 }
 
@@ -331,7 +330,7 @@ func SaveConfig(configKey string, configValue string) error {
 	//if err != nil {
 	//	return err
 	//}
-	//log.Println("last config record id " + strconv.Itoa(int(lastId)))
+	//logger.Println("last config record id " + strconv.Itoa(int(lastId)))
 	return nil
 }
 
@@ -533,7 +532,7 @@ func SaveTransaction(tx *types.HxTransaction) error {
 	//if err != nil {
 	//	return err
 	//}
-	//log.Println("last tx record id " + strconv.Itoa(int(lastId)))
+	//logger.Println("last tx record id " + strconv.Itoa(int(lastId)))
 	return nil
 }
 
@@ -610,13 +609,13 @@ func InsertDynamicOperation(tableName string, tableSchema *PgTableSchema, opJson
 	sql := fmt.Sprintf("INSERT INTO public.%s (%s) VALUES (%s)", tableName, columnsSql, strings.Join(prepareValueSqls, ","))
 	stmt, err := dbConn.Prepare(sql)
 	if err != nil {
-		log.Println("insert sql " + sql)
+		logger.Println("insert sql " + sql)
 		return err
 	}
 	defer stmt.Close()
 	res, err := stmt.Exec(opValuesForSql...)
 	if err != nil {
-		log.Println("insert sql " + sql)
+		logger.Println("insert sql " + sql)
 		return err
 	}
 	_ = res

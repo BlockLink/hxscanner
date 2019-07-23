@@ -4,15 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 	netrpc "net/rpc"
 	"time"
 
 	"github.com/blocklink/hxscanner/wsjsonrpc/jsonrpc"
 	"golang.org/x/net/websocket"
 	"github.com/blocklink/hxscanner/src/types"
+	"github.com/blocklink/hxscanner/src/log"
 	"strconv"
 )
+
+var logger = log.GetLogger()
 
 var _ws *websocket.Conn = nil
 var _client *netrpc.Client = nil
@@ -44,7 +46,7 @@ func ConnectHxNode(ctx context.Context, apiUrl string) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Fatal(CloseHxNodeConn())
+			logger.Fatal(CloseHxNodeConn())
 		}
 	}()
 	return nil
@@ -73,7 +75,7 @@ func GetKeysOfJson(val map[string]interface{}) []string {
 
 func GetBlock(blockNum int) (block *types.HxBlock, err error) {
 	if !IsHxNodeConnected() {
-		log.Println("ws to hx_node disconnected")
+		logger.Println("ws to hx_node disconnected")
 		return
 	}
 	var wrapperReply interface{}
@@ -84,7 +86,7 @@ func GetBlock(blockNum int) (block *types.HxBlock, err error) {
 		if err.Error() == "error <nil>" {
 			return nil, nil
 		}
-		log.Println("get_block error " + err.Error())
+		logger.Println("get_block error " + err.Error())
 		return
 	}
 	replyJSONBytes, err := json.Marshal(&wrapperReply)
@@ -92,7 +94,7 @@ func GetBlock(blockNum int) (block *types.HxBlock, err error) {
 	replyJSONBytesDecoder.UseNumber()
 	err = replyJSONBytesDecoder.Decode(&reply)
 	if err != nil {
-		log.Println("decode reply error: " + err.Error())
+		logger.Println("decode reply error: " + err.Error())
 		return
 	}
 	block = reply
@@ -107,7 +109,7 @@ func GetBlock(blockNum int) (block *types.HxBlock, err error) {
 	var fullTxsReply = make([]types.HxFullTransactionExtraInfo, 0)
 	err = c.Call("fetch_block_transactions", blockNum, &fullTxsReply)
 	if err != nil {
-		log.Println("fetch_block_transactions error", err)
+		logger.Println("fetch_block_transactions error", err)
 		return
 	}
 	block.TransactionIds = make([]string, 0)
@@ -144,7 +146,7 @@ func CheckTransactionHasContractOp(txInfo *types.HxTransaction) bool {
 
 func InvokeContractOffline(callerPubKeyStr string, contractAddr, apiName string, apiArg string) (result string, err error) {
 	if !IsHxNodeConnected() {
-		log.Println("ws to hx_node disconnected")
+		logger.Println("ws to hx_node disconnected")
 		return
 	}
 	var reply interface{}
@@ -160,7 +162,7 @@ func InvokeContractOffline(callerPubKeyStr string, contractAddr, apiName string,
 		return
 	}
 	result = string(b)
-	log.Println("offline reply " + result)
+	logger.Println("offline reply " + result)
 	return
 }
 
@@ -181,7 +183,7 @@ func InvokeContractOfflineWithIntResult(callerPubKeyStr string, contractAddr, ap
 
 func GetTxReceipts(txInfo *types.HxTransaction) (txReceipts *types.HxContractTxReceipt, err error) {
 	if !IsHxNodeConnected() {
-		log.Println("ws to hx_node disconnected")
+		logger.Println("ws to hx_node disconnected")
 		return
 	}
 	txReceipts = new(types.HxContractTxReceipt)
@@ -189,7 +191,7 @@ func GetTxReceipts(txInfo *types.HxTransaction) (txReceipts *types.HxContractTxR
 	c := _client
 	err = c.Call("get_contract_invoke_object", txInfo.Trxid, &(txReceipts.OpReceipts))
 	if err != nil {
-		log.Println("get_contract_invoke_object error: " + err.Error())
+		logger.Println("get_contract_invoke_object error: " + err.Error())
 		return
 	}
 	replyJSONBytes, err := json.Marshal(&txReceipts.OpReceipts)
@@ -212,7 +214,7 @@ func GetTxReceipts(txInfo *types.HxTransaction) (txReceipts *types.HxContractTxR
 func FindHxTransactionByTxid(txid string) (state string) {
 	state = "TxStateNotFound"
 	if !IsHxNodeConnected() {
-		log.Println("ws to hx_node disconnected")
+		logger.Println("ws to hx_node disconnected")
 		return
 	}
 	//args := TxidArgs{txid}
@@ -220,7 +222,7 @@ func FindHxTransactionByTxid(txid string) (state string) {
 	c := _client
 	err := c.Call("get_transaction_by_id", txid, &reply)
 	if err != nil {
-		log.Println("get_transaction_by_id error", err)
+		logger.Println("get_transaction_by_id error", err)
 		return
 	}
 	state = "TxStateSuccess"
@@ -231,7 +233,7 @@ func FindHxTransactionByTxid(txid string) (state string) {
 	replyJSONBytesDecoder.UseNumber()
 	err = replyJSONBytesDecoder.Decode(&reply)
 	if err != nil {
-		log.Println("decode reply error: " + err.Error())
+		logger.Println("decode reply error: " + err.Error())
 		return
 	}
 	// if it's contract tx, get_contract_invoke_object txid to query exec_succeed(whether fail)
@@ -260,7 +262,7 @@ func FindHxTransactionByTxid(txid string) (state string) {
 		var contractInvokeObjectReply = []map[string]interface{}{}
 		err := c.Call("get_contract_invoke_object", txid, &contractInvokeObjectReply)
 		if err != nil {
-			log.Println("get_contract_invoke_object error: " + err.Error())
+			logger.Println("get_contract_invoke_object error: " + err.Error())
 			return
 		}
 		replyJSONBytes, err := json.Marshal(&contractInvokeObjectReply)

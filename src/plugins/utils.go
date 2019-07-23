@@ -1,6 +1,11 @@
 package plugins
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"github.com/blocklink/hxscanner/src/log"
+)
+
+var logger = log.GetLogger()
 
 func isStringInArray(item string, arr []string) bool {
 	for _, val := range arr {

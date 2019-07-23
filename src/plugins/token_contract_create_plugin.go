@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"github.com/blocklink/hxscanner/src/types"
-	"log"
 	"errors"
 	"github.com/blocklink/hxscanner/src/db"
 	"github.com/blocklink/hxscanner/src/nodeservice"
@@ -151,27 +150,27 @@ func (plugin *TokenContractCreateScanPlugin) ApplyOperation(block *types.HxBlock
 	opJSON map[string]interface{}, receipt *types.HxContractOpReceipt) (err error) {
 	if opTypeName == "contract_register_operation" {
 		// contract register
-		log.Println("found a new contract in tx " + txid)
+		logger.Println("found a new contract in tx " + txid)
 		if receipt==nil || !receipt.ExecSucceed {
-			log.Println("receive fail contract tx " + txid)
+			logger.Println("receive fail contract tx " + txid)
 			return
 		}
 		var contractOp *contractRegisterOperation
 		contractOp, err = decodeTokenRegisterOperation(opJSON)
 		if err != nil {
-			log.Println("decode token register operation error", err)
+			logger.Println("decode token register operation error", err)
 			return
 		}
 		if !isAllInArray([]string{"transfer", "transferFrom", "approve"}, contractOp.Abi) {
-			log.Println("not token contract")
+			logger.Println("not token contract")
 			return
 		}
 		if !isAllInArray([]string{"balanceOf", "totalSupply", "precision", "approvedBalanceFrom"}, contractOp.OfflineAbi) {
-			log.Println("not token contract")
+			logger.Println("not token contract")
 			return
 		}
 
-		log.Println("found a token contract")
+		logger.Println("found a token contract")
 		// 调用合约查询token的基本属性
 		precision := new(uint32)
 		tokenName := new(string)
@@ -225,9 +224,9 @@ func (plugin *TokenContractCreateScanPlugin) ApplyOperation(block *types.HxBlock
 		}
 	} else if opTypeName == "native_contract_register_operation" {
 		// native contract register
-		log.Println("found a new native contract in tx " + txid)
+		logger.Println("found a new native contract in tx " + txid)
 		if receipt==nil || !receipt.ExecSucceed {
-			log.Println("receive fail contract tx " + txid)
+			logger.Println("receive fail contract tx " + txid)
 			return
 		}
 		// TODO

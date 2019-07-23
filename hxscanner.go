@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 
@@ -13,10 +12,13 @@ import (
 	"github.com/blocklink/hxscanner/src/nodeservice"
 	"github.com/blocklink/hxscanner/src/scanner"
 	"github.com/blocklink/hxscanner/src/plugins"
+	"github.com/blocklink/hxscanner/src/log"
 )
 
 func main() {
-	log.Println("starting hxscanner")
+	logger := log.GetLogger()
+	log.InitLogger(logger, "info")
+	logger.Println("starting hxscanner")
 	stop := make(chan os.Signal, 2)
 	signal.Notify(stop, os.Interrupt)
 	signal.Notify(stop, os.Kill)
@@ -43,7 +45,7 @@ func main() {
 	defer nodeservice.CloseHxNodeConn()
 	err := db.OpenDb(config.SystemConfig.DbConnectionString)
 	if err != nil {
-		log.Fatal("open db connection error " + err.Error())
+		logger.Fatal("open db connection error " + err.Error())
 		return
 	}
 	defer db.CloseDb()
@@ -54,7 +56,7 @@ func main() {
 	go func() {
 		lastScannedBlockNum, err := db.GetLastScannedBlockNumber()
 		if err != nil {
-			log.Fatal("read last scanned block number error " + err.Error())
+			logger.Fatal("read last scanned block number error " + err.Error())
 			return
 		}
 		if *scanFromBlockNumberFlag >= 0 {
@@ -67,7 +69,7 @@ func main() {
 	select {
 	case <-stop:
 		{
-			log.Println("hxscanner stopping")
+			logger.Println("hxscanner stopping")
 			cancel()
 		}
 	}

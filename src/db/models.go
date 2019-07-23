@@ -3,11 +3,13 @@ package db
 import (
 	_ "github.com/bmizerany/pq"
 	"database/sql"
-	"log"
+	"github.com/blocklink/hxscanner/src/log"
 	"math/big"
 	"github.com/shopspring/decimal"
 	"time"
 )
+
+var logger = log.GetLogger()
 
 var dbConn *sql.DB = nil
 
@@ -20,7 +22,7 @@ func CloseDb() {
 	if dbConn != nil {
 		err := dbConn.Close()
 		if err != nil {
-			log.Println("close db connection error " + err.Error())
+			logger.Println("close db connection error " + err.Error())
 		}
 		dbConn = nil
 	}
