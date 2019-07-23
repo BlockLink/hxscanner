@@ -131,7 +131,7 @@ var OperationNames = []string {
 	"vote_create_operation",
 	"vote_update_operation",
 	"undertaker_operation",
-	"name_transfer_operation"
+	"name_transfer_operation",
 }
 
 func GetOperationNameByOperationType(operationType int) (string, error) {
