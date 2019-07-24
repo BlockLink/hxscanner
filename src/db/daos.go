@@ -272,7 +272,7 @@ func SaveBlock(block *types.HxBlock) error {
 		return err
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(block.BlockNumber, block.BlockNumber, block.Previous, block.Timestamp, block.Trxfee, block.Miner, block.TransactionMerkleRoot, block.NextSecretHash, 0, len(block.Transactions), "TODO")
+	res, err := stmt.Exec(block.BlockNumber, block.BlockNumber, block.Previous, block.Timestamp, block.Trxfee, block.Miner, block.TransactionMerkleRoot, block.NextSecretHash, 0, len(block.Transactions), "")
 	if err != nil {
 		return err
 	}
