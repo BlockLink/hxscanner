@@ -9,9 +9,14 @@ services:
       POSTGRES_PASSWORD: 12345678
     ports:
       - 18030:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
 
   adminer:
     image: adminer
     restart: always
     ports:
       - 18031:8080
+
+volumes:
+  db-data: {}
