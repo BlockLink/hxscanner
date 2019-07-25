@@ -14,6 +14,10 @@ type TokenContractCreateScanPlugin struct {
 
 }
 
+func (plugin *TokenContractCreateScanPlugin) PluginName() string {
+	return "TokenContractCreateScanPlugin"
+}
+
 type contractRegisterOperation struct {
 	ContractCode map[string]interface{}
 	Abi []string

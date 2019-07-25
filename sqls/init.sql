@@ -170,6 +170,25 @@ CREATE TABLE "token_contract_transfer_history" (
   CONSTRAINT "pk_token_contract_transfer_history" PRIMARY KEY (id)
 );
 
+CREATE TABLE "asset" (
+  asset_id varchar(10) NOT NULL,
+  symbol varchar(20) NOT NULL,
+  precision integer NOT NULL,
+  created_at bigint NOT NULL,
+  updated_at bigint NOT NULL,
+  CONSTRAINT "pk_asset" PRIMARY KEY (asset_id)
+);
+
+CREATE TABLE "address_balance" (
+  id serial NOT NULL,
+  owner_addr varchar(100) NOT NULL,
+  asset_id varchar(10) NOT NULL,
+  amount decimal(36, 18) NOT NULL,
+  created_at bigint NOT NULL,
+  updated_at bigint NOT NULL,
+  CONSTRAINT "pk_address_balance" PRIMARY KEY (id)
+);
+
 CREATE INDEX token_contract_transfer_history_contract_addr_idx ON token_contract_transfer_history (contract_addr);
 
 CREATE INDEX token_contract_transfer_history_txid_op_num_idx ON token_contract_transfer_history (txid, op_num);
@@ -177,3 +196,7 @@ CREATE INDEX token_contract_transfer_history_txid_op_num_idx ON token_contract_t
 CREATE INDEX token_contract_transfer_history_from_addr_and_to_addr_idx ON token_contract_transfer_history (from_addr, to_addr);
 
 CREATE INDEX token_contract_transfer_history_contract_addr_and_from_addr_and_to_addr_idx ON token_contract_transfer_history (contract_addr, from_addr, to_addr);
+
+CREATE INDEX address_balance_owner_addr_idx ON address_balance (owner_addr);
+CREATE INDEX address_balance_asset_id_idx ON address_balance (asset_id);
+CREATE INDEX address_balance_owner_addr_and_asset_id_idx ON address_balance (owner_addr, asset_id);

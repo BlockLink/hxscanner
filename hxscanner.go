@@ -50,6 +50,8 @@ func main() {
 	}
 	defer db.CloseDb()
 
+	scanner.AddScanPlugin(new(plugins.TransferPlugin))
+	scanner.AddScanPlugin(new(plugins.AssetMaybeChangePlugin))
 	scanner.AddScanPlugin(new(plugins.TokenContractCreateScanPlugin))
 	scanner.AddScanPlugin(new(plugins.TokenContractInvokeScanPlugin))
 

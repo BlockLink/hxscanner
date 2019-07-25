@@ -122,6 +122,23 @@ type TokenBalanceEntity struct {
 	UpdatedAt time.Time
 }
 
+type AssetEntity struct {
+	AssetId string
+	Symbol string
+	Precision uint32
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type AddressBalanceEntity struct {
+	Id int64
+	OwnerAddr string
+	AssetId string
+	Amount decimal.Decimal
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 // token合约的转账历史记录
 type TokenContractTransferHistoryEntity struct {
 	Id int64

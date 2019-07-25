@@ -12,6 +12,7 @@ import (
 	"github.com/blocklink/hxscanner/src/types"
 	"github.com/blocklink/hxscanner/src/log"
 	"strconv"
+	"github.com/blocklink/hxscanner/src/db"
 )
 
 var logger = log.GetLogger()
@@ -178,6 +179,59 @@ func InvokeContractOfflineWithIntResult(callerPubKeyStr string, contractAddr, ap
 		}
 	}
 	result, err = strconv.ParseInt(strResult, 10, 64)
+	return
+}
+
+func ListAssets(offset, limit int) (result []*db.AssetEntity, err error) {
+	if !IsHxNodeConnected() {
+		logger.Println("ws to hx_node disconnected")
+		return
+	}
+	type assetItem struct {
+		AssetId string `json:"id"`
+		Precision uint32 `json:"precision"`
+		Symbol string `json:"symbol"`
+	}
+	type replyInfo = []assetItem
+	var reply = make(replyInfo, 0)
+	c := _client
+	args := []interface{}{offset, limit}
+	err = c.Call("list_assets", args, &reply)
+	if err != nil {
+		return
+	}
+	now := time.Now()
+	for _, item := range reply {
+		result = append(result, &db.AssetEntity{AssetId:item.AssetId, Precision:item.Precision, Symbol:item.Symbol, CreatedAt:now, UpdatedAt:now})
+	}
+	return
+}
+
+/**
+ * 获取某个地址的各资产余额
+ * @return {assetId(1.3.x) => balance amount(int64)}
+ */
+func GetAddressBalances(addr string) (result map[string]int64, err error) {
+	if !IsHxNodeConnected() {
+		logger.Println("ws to hx_node disconnected")
+		return
+	}
+	type balanceItem struct {
+		Amount int64 `json:"amount"`
+		AssetId string `json:"asset_id"`
+	}
+	type replyInfo = []balanceItem
+	var reply = make(replyInfo, 0)
+	c := _client
+	args := []interface{}{addr}
+	err = c.Call("get_addr_balances", args, &reply)
+	if err != nil {
+		return
+	}
+	result = make(map[string]int64)
+	for _, item := range reply {
+		result[item.AssetId] = item.Amount
+	}
 	return
 }
 

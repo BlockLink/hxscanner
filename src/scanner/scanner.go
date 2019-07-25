@@ -40,6 +40,7 @@ func ApplyPluginsToOperation(block *types.HxBlock, txid string, opIndex int, opT
 	for _, plugin := range scanPlugins {
 		err = plugin.ApplyOperation(block, txid, opIndex, opType, opTypeName, opJSON, receipt)
 		if err != nil {
+			logger.Println("error with apply plugin " + plugin.PluginName() + " to optype " + opTypeName + ": " + err.Error())
 			return
 		}
 	}

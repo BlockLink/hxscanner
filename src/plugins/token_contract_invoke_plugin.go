@@ -17,6 +17,10 @@ import (
 type TokenContractInvokeScanPlugin struct {
 }
 
+func (plugin *TokenContractInvokeScanPlugin) PluginName() string {
+	return "TokenContractInvokeScanPlugin"
+}
+
 func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock, txid string, opNum int, opType int, opTypeName string,
 	opJSON map[string]interface{}, receipt *types.HxContractOpReceipt) (err error) {
 	if receipt == nil || !receipt.ExecSucceed {
@@ -210,6 +214,42 @@ func (plugin *TokenContractInvokeScanPlugin) ApplyOperation(block *types.HxBlock
 			}
 		default:
 			continue
+		}
+	}
+	// process contract withdraws
+	for _, change := range receipt.DepositToAddressChanges {
+		var ok bool
+		changeItem, ok := change.([]interface{})
+		if !ok {
+			continue
+		}
+		if len(changeItem) < 2 {
+			continue
+		}
+		addressAssetPair, ok := changeItem[0].([]interface{})
+		if !ok {
+			continue
+		}
+		if len(addressAssetPair) < 2 {
+			continue
+		}
+		addr, ok := addressAssetPair[0].(string)
+		if !ok {
+			continue
+		}
+		assetId, ok := addressAssetPair[1].(string)
+		if !ok {
+			continue
+		}
+		//amount, ok := changeItem[1].(json.Number)
+		//if !ok {
+		//	amountT := reflect.TypeOf(changeItem[1])
+		//	logger.Println("invalid deposit_address type " + amountT.String())
+		//	continue
+		//}
+		err = updateAddressBalance(addr, assetId)
+		if err != nil {
+			return
 		}
 	}
 	return
