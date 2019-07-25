@@ -217,20 +217,32 @@ func GetAddressBalances(addr string) (result map[string]int64, err error) {
 		return
 	}
 	type balanceItem struct {
-		Amount int64 `json:"amount"`
+		Amount json.Number `json:"amount"`
 		AssetId string `json:"asset_id"`
 	}
 	type replyInfo = []balanceItem
-	var reply = make(replyInfo, 0)
+	var reply interface{}
 	c := _client
 	args := []interface{}{addr}
 	err = c.Call("get_addr_balances", args, &reply)
 	if err != nil {
 		return
 	}
+	var replyObj = make(replyInfo, 0)
+	replyBytes, err := json.Marshal(reply)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(replyBytes, &replyObj)
+	if err != nil {
+		return
+	}
 	result = make(map[string]int64)
-	for _, item := range reply {
-		result[item.AssetId] = item.Amount
+	for _, item := range replyObj {
+		result[item.AssetId], err = item.Amount.Int64()
+		if err != nil {
+			return
+		}
 	}
 	return
 }
