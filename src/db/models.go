@@ -139,6 +139,14 @@ type AddressBalanceEntity struct {
 	UpdatedAt time.Time
 }
 
+type AccountEntity struct {
+	Id int64
+	OwnerAddr string
+	AccountName string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 // token合约的转账历史记录
 type TokenContractTransferHistoryEntity struct {
 	Id int64

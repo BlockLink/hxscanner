@@ -189,6 +189,15 @@ CREATE TABLE "address_balance" (
   CONSTRAINT "pk_address_balance" PRIMARY KEY (id)
 );
 
+CREATE TABLE "account" (
+  id serial NOT NULL,
+  owner_addr varchar(100) NOT NULL,
+  account_name varchar(100) NOT NULL,
+  created_at bigint NOT NULL,
+  updated_at bigint NOT NULL,
+  CONSTRAINT "pk_account" PRIMARY KEY (id)
+);
+
 CREATE INDEX token_contract_transfer_history_contract_addr_idx ON token_contract_transfer_history (contract_addr);
 
 CREATE INDEX token_contract_transfer_history_txid_op_num_idx ON token_contract_transfer_history (txid, op_num);
@@ -200,3 +209,6 @@ CREATE INDEX token_contract_transfer_history_contract_addr_and_from_addr_and_to_
 CREATE INDEX address_balance_owner_addr_idx ON address_balance (owner_addr);
 CREATE INDEX address_balance_asset_id_idx ON address_balance (asset_id);
 CREATE INDEX address_balance_owner_addr_and_asset_id_idx ON address_balance (owner_addr, asset_id);
+
+CREATE INDEX account_owner_addr_idx ON account (owner_addr);
+CREATE INDEX account_account_name_idx ON account (account_name);
