@@ -31,6 +31,7 @@ CREATE TABLE "citizen_infos" (
 );
 
 CREATE TABLE "operations" (
+    serial_id serial NOT NULL,
     id text NOT NULL,
     txid text NULL,
     tx_block_number bigint NOT NULL,
@@ -39,7 +40,7 @@ CREATE TABLE "operations" (
     operation_type_name varchar(255) NOT NULL,
     operation_json text NULL,
     addr text NULL,
-    CONSTRAINT "pk_operations" PRIMARY KEY (id)
+    CONSTRAINT "pk_operations" PRIMARY KEY (serial_id)
 );
 
 CREATE INDEX operations_txid_idx ON operations (txid);
@@ -54,7 +55,7 @@ CREATE TABLE "scan_configs" (
 CREATE INDEX scan_configs_key_idx ON scan_configs (config_key);
 
 CREATE TABLE "transactions" (
-    serialId serial NOT NULL,
+    serial_id serial NOT NULL,
     block_number integer NOT NULL,
     id text NOT NULL,
     ref_block_num bigint NOT NULL,
@@ -64,7 +65,7 @@ CREATE TABLE "transactions" (
     index_in_block bigint NOT NULL,
     first_operation_type bigint NOT NULL,
     txid text NULL,
-    CONSTRAINT "pk_transactions" PRIMARY KEY (id)
+    CONSTRAINT "pk_transactions" PRIMARY KEY (serial_id)
 );
 
 CREATE INDEX transactions_idx ON transactions(txid);

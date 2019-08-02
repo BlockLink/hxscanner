@@ -173,7 +173,7 @@ func GetBaseOperationId(blockNum int, trxId string, opNum int) string {
 }
 
 func FindBaseOperation(id string) (result *BaseOperationEntity, err error) {
-	rows, err := dbConn.Query("SELECT id, txid, tx_block_number, tx_index_in_block, operation_type," +
+	rows, err := dbConn.Query("SELECT serial_id, id, txid, tx_block_number, tx_index_in_block, operation_type," +
 		" operation_type_name, operation_json, addr FROM public.operations where id=$1", id)
 	if err != nil {
 		return
@@ -181,7 +181,7 @@ func FindBaseOperation(id string) (result *BaseOperationEntity, err error) {
 	defer rows.Close()
 	if rows.Next() {
 		result = new(BaseOperationEntity)
-		err = rows.Scan(&result.Id, &result.Trxid, &result.BlockNum, &result.TxIndexInBlock, &result.OperationType,
+		err = rows.Scan(&result.SerialId, &result.Id, &result.Trxid, &result.BlockNum, &result.TxIndexInBlock, &result.OperationType,
 			&result.OperationTypeName, &result.OperationJSON, &result.Addr)
 		if err != nil {
 			return

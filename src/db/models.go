@@ -53,10 +53,10 @@ type TransactionEntity struct {
 	IndexInBlock int
 	FirstOperationType int
 	Txid string
-	// TODO: 增加BlockNum
 }
 
 type BaseOperationEntity struct {
+	SerialId int64
 	Id string
 	Trxid string
 	BlockNum int
