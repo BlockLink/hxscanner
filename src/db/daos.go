@@ -240,7 +240,7 @@ func GetTableSchema(tableName string) (result *PgTableSchema, err error) {
 }
 
 func FindTransaction(txid string) (result *TransactionEntity, err error) {
-	rows, err := dbConn.Query("SELECT id, ref_block_num, ref_block_prefix, expiration, operations_count," +
+	rows, err := dbConn.Query("SELECT serial_id, block_number, id, ref_block_num, ref_block_prefix, expiration, operations_count," +
 		" index_in_block, first_operation_type, txid FROM public.transactions where txid=$1", txid)
 	if err != nil {
 		return
@@ -248,7 +248,7 @@ func FindTransaction(txid string) (result *TransactionEntity, err error) {
 	defer rows.Close()
 	if rows.Next() {
 		result = new(TransactionEntity)
-		err = rows.Scan(&result.Id, &result.RefBlockNum, &result.RefBlockPrefix, &result.Expiration,
+		err = rows.Scan(&result.SerialId, &result.BlockNumber, &result.Id, &result.RefBlockNum, &result.RefBlockPrefix, &result.Expiration,
 			&result.OperationsCount, &result.IndexInBlock, &result.FirstOperationType, &result.Txid)
 		if err != nil {
 			return
@@ -501,9 +501,9 @@ func UpdateConfig(configEntity *ScanConfigEntity) error {
 }
 
 func SaveTransaction(tx *types.HxTransaction) error {
-	stmt, err := dbConn.Prepare("INSERT INTO public.transactions (id, ref_block_num, ref_block_prefix," +
+	stmt, err := dbConn.Prepare("INSERT INTO public.transactions (block_number, id, ref_block_num, ref_block_prefix," +
 		" expiration, operations_count, index_in_block, first_operation_type, txid)" +
-		" VALUES (($1),($2),($3),($4),($5),($6),($7),($8) )")
+		" VALUES (($1),($2),($3),($4),($5),($6),($7),($8), $9 )")
 	if err != nil {
 		return err
 	}
@@ -523,7 +523,7 @@ func SaveTransaction(tx *types.HxTransaction) error {
 		}
 		firstOpType = int(firstOpTypeInt64)
 	}
-	res, err := stmt.Exec(tx.Trxid, tx.RefBlockNum, tx.RefBlockPrefix, tx.Expiration, len(tx.Operations), tx.IndexInBlock, firstOpType, tx.Trxid)
+	res, err := stmt.Exec(tx.BlockNum, tx.Trxid, tx.RefBlockNum, tx.RefBlockPrefix, tx.Expiration, len(tx.Operations), tx.IndexInBlock, firstOpType, tx.Trxid)
 	if err != nil {
 		return err
 	}

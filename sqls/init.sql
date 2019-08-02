@@ -54,6 +54,8 @@ CREATE TABLE "scan_configs" (
 CREATE INDEX scan_configs_key_idx ON scan_configs (config_key);
 
 CREATE TABLE "transactions" (
+    serialId serial NOT NULL,
+    block_number integer NOT NULL,
     id text NOT NULL,
     ref_block_num bigint NOT NULL,
     ref_block_prefix numeric(20,0) NOT NULL,

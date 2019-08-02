@@ -111,6 +111,7 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 
 		for txIndex := 0;txIndex < len(block.Transactions);txIndex++ {
 			txInfo := block.Transactions[txIndex]
+			txInfo.BlockNum = uint32(block.BlockNumber)
 			//logger.Println("tx index " + strconv.Itoa(txIndex) + " trxid " + txInfo.Trxid)
 			txHasContractOp := nodeservice.CheckTransactionHasContractOp(txInfo)
 			var txReceipts *types.HxContractTxReceipt = nil

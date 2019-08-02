@@ -43,6 +43,8 @@ type BlockEntity struct {
 }
 
 type TransactionEntity struct {
+	SerialId int64
+	BlockNumber uint32
 	Id string
 	RefBlockNum uint64
 	RefBlockPrefix uint64
