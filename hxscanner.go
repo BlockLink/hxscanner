@@ -34,6 +34,7 @@ func main() {
 	dbPassword := flag.String("db_pass", "", "postgresql database password")
 	dbName := flag.String("db_name", "hxscanner", "postgresql database for this application(=hxscanner)")
 	scanFromBlockNumberFlag := flag.Int("scan_from", -1, "scan from block number(default last scanned)")
+	onlyWeb := flag.Bool("only_web", false, "only start web component(default false)")
 	flag.Parse()
 
 	config.SystemConfig = new(config.Config)
@@ -56,18 +57,20 @@ func main() {
 	scanner.AddScanPlugin(new(plugins.TokenContractCreateScanPlugin))
 	scanner.AddScanPlugin(new(plugins.TokenContractInvokeScanPlugin))
 
-	go func() {
-		lastScannedBlockNum, err := db.GetLastScannedBlockNumber()
-		if err != nil {
-			logger.Fatal("read last scanned block number error " + err.Error())
-			return
-		}
-		if *scanFromBlockNumberFlag >= 0 {
-			lastScannedBlockNum = uint32(*scanFromBlockNumberFlag)
-		}
-		scanner.ScanBlocksFrom(ctx, int(lastScannedBlockNum)+1)
-		signal.Stop(stop)
-	}()
+	if onlyWeb != nil && *onlyWeb {
+		go func() {
+			lastScannedBlockNum, err := db.GetLastScannedBlockNumber()
+			if err != nil {
+				logger.Fatal("read last scanned block number error " + err.Error())
+				return
+			}
+			if *scanFromBlockNumberFlag >= 0 {
+				lastScannedBlockNum = uint32(*scanFromBlockNumberFlag)
+			}
+			scanner.ScanBlocksFrom(ctx, int(lastScannedBlockNum)+1)
+			signal.Stop(stop)
+		}()
+	}
 
 	select {
 	case <-stop:
