@@ -63,6 +63,7 @@ func ScanBlocksFrom(ctx context.Context, startBlockNum int) {
 		}
 		// TODO: fetch 100 blocks concurrency
 		// TODO: use channel to produce fetched-blocks goroutine and store goroutine
+		logger.Println("scanning block #" + strconv.Itoa(scannedBlockNum))
 		block, err := nodeservice.GetBlock(scannedBlockNum)
 		if err != nil {
 			logger.Println("got block at #" + strconv.Itoa(scannedBlockNum) + " with error "+ err.Error())
